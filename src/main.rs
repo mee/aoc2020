@@ -1,4 +1,5 @@
 use clap::{Arg, App};
+use num_traits::pow;
 
 #[macro_use]
 extern crate lazy_static;
@@ -19,6 +20,7 @@ fn main() {
             "2" => day2(),
             "3" => day3(),
             "4" => day4(),
+            "5" => day5(),
             _ => println!("Invalid day specified"),
         }
 }
@@ -248,4 +250,45 @@ fn day4() {
         valid = valid + 1;
     }
     println!("Found {} valid passports", valid);
+}
+
+// day 5
+
+fn row(pass: &str) -> usize {
+    let mut row = 0;
+    for (index, ch) in pass.chars().take(7).enumerate() {
+        if ch == 'B' { dbg!(row = row + dbg!(pow(2, 7 - index - 1))); }
+    }
+    return row;
+}
+
+fn col(pass: &str) -> usize {
+    let mut col = 0;
+    for (index, ch) in pass.chars().skip(7).enumerate() {
+        if ch == 'R' { col = col + pow(2, 3 - index - 1); }
+    }
+    return col;
+}
+
+fn day5() {
+    let input = include_str!("5.input");
+    let mut max_id = 0;
+    for line in input.lines() {
+        let seat_id = dbg!(dbg!(row(line)) * 8 + dbg!(col(line)));
+        if seat_id > max_id {
+            max_id = seat_id;
+        }
+    }
+    println!("The maximum seat id found in the input is {}", max_id);
+}
+
+#[test]
+fn test_row() {
+    assert_eq!(row("BFFFBBFRRR"), 70);
+    assert_eq!(row("FFFBBBFRRR"), 14);
+    assert_eq!(row("BBFFBBFRLL"), 102);
+
+    assert_eq!(col("BFFFBBFRRR"), 7);
+    assert_eq!(col("FFFBBBFRRR"), 7);
+    assert_eq!(col("BBFFBBFRLL"), 4);
 }
