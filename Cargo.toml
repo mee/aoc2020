@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 clap = "*"
+regex = "*"
+lazy_static = "*"
+num-traits = "*"

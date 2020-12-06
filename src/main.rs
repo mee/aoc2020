@@ -21,6 +21,7 @@ fn main() {
             "3" => day3(),
             "4" => day4(),
             "5" => day5(),
+            "6" => day6(),
             _ => println!("Invalid day specified"),
         }
 }
@@ -316,4 +317,27 @@ fn test_col() {
 fn test_cumsum() {
     assert_eq!(cumsum(3), 6);
     assert_eq!(cumsum(4), 10);
+}
+
+// day 6
+fn day6() {
+    let input = include_str!("6.input");
+
+    use std::collections::HashSet;
+
+    let mut sum = 0;
+    let mut group_qs: HashSet<char> = HashSet::new();
+    for line in input.lines() {
+        if line == "" {
+            sum = sum + group_qs.len();
+            group_qs.clear();
+        } else {
+            for ch in line.chars() {
+                group_qs.insert(ch);
+            }
+        }
+    }
+    sum = sum + group_qs.len();
+
+    println!("The sum of unique questions per group is {}", sum);
 }
