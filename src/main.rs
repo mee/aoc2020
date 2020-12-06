@@ -325,19 +325,25 @@ fn day6() {
 
     use std::collections::HashSet;
 
+    let mut mark = true;
     let mut sum = 0;
     let mut group_qs: HashSet<char> = HashSet::new();
     for line in input.lines() {
         if line == "" {
             sum = sum + group_qs.len();
             group_qs.clear();
+            mark = true;
         } else {
-            for ch in line.chars() {
-                group_qs.insert(ch);
+            if mark {
+                group_qs = line.chars().collect::<HashSet<char>>();
+                mark = false;
+            } else {
+                let person_qs: HashSet<char> = line.chars().collect();
+                group_qs = group_qs.intersection(&person_qs).cloned().collect();
             }
         }
     }
     sum = sum + group_qs.len();
 
-    println!("The sum of unique questions per group is {}", sum);
+    println!("The sum of common questions per group is {}", sum);
 }
