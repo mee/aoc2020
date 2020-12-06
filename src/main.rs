@@ -109,6 +109,9 @@ fn day3() {
     #[derive(Copy, Clone, Debug)]
     struct Cursor { pos: usize, right: usize, down: usize, trees: usize };
     impl Cursor {
+        fn new(r: usize, d: usize) -> Cursor {
+            return Cursor { pos: 0, right: r, down: d, trees: 0 };
+        }
         fn shift(&mut self, width: usize) {
             self.pos = (self.pos + self.right) % (width + 1);
         }
@@ -116,13 +119,12 @@ fn day3() {
             self.trees = self.trees + 1;
         }
     }
-    //let mut cursors = vec![ Cursor { pos: 0, right: 3, down: 1 } ];
     let mut cursors = vec![
-        Cursor { pos: 0, right: 1, down: 1, trees: 0 },
-        Cursor { pos: 0, right: 3, down: 1, trees: 0 },
-        Cursor { pos: 0, right: 5, down: 1, trees: 0 },
-        Cursor { pos: 0, right: 7, down: 1, trees: 0 },
-        Cursor { pos: 0, right: 1, down: 2, trees: 0 },
+        Cursor::new(1, 1),
+        Cursor::new(3, 1),
+        Cursor::new(5, 1),
+        Cursor::new(7, 1),
+        Cursor::new(1, 2),
     ];
 
     let mut width = 0;
@@ -136,7 +138,6 @@ fn day3() {
                 cursor.shift(width);
                 if line.chars().nth(cursor.pos).unwrap() == '#' {
                     cursor.tree();
-                } else {
                 }
             }
         }
