@@ -257,7 +257,7 @@ fn day4() {
 fn row(pass: &str) -> usize {
     let mut row = 0;
     for (index, ch) in pass.chars().take(7).enumerate() {
-        if ch == 'B' { dbg!(row = row + dbg!(pow(2, 7 - index - 1))); }
+        if ch == 'B' { row = row + pow(2, 7 - index - 1); }
     }
     return row;
 }
@@ -274,7 +274,7 @@ fn day5() {
     let input = include_str!("5.input");
     let mut max_id = 0;
     for line in input.lines() {
-        let seat_id = dbg!(dbg!(row(line)) * 8 + dbg!(col(line)));
+        let seat_id = row(line) * 8 + col(line);
         if seat_id > max_id {
             max_id = seat_id;
         }
