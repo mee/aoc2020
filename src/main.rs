@@ -270,16 +270,32 @@ fn col(pass: &str) -> usize {
     return col;
 }
 
+// closed form solution for sum(i..k)
+fn cumsum(k: usize) -> usize{
+    k * (k + 1) / 2
+}
+
 fn day5() {
     let input = include_str!("5.input");
     let mut max_id = 0;
+    let mut min_id = 1000;
+    let mut sum_id = 0;
     for line in input.lines() {
         let seat_id = row(line) * 8 + col(line);
         if seat_id > max_id {
             max_id = seat_id;
         }
+        if seat_id < min_id {
+            min_id = seat_id;
+        }
+        sum_id = sum_id + seat_id;
     }
+
+    let expected_sum = cumsum(max_id) - cumsum(min_id - 1);
+    let my_seat_id = expected_sum - sum_id;
+
     println!("The maximum seat id found in the input is {}", max_id);
+    println!("My seat id is {}", my_seat_id);
 }
 
 #[test]
@@ -287,8 +303,17 @@ fn test_row() {
     assert_eq!(row("BFFFBBFRRR"), 70);
     assert_eq!(row("FFFBBBFRRR"), 14);
     assert_eq!(row("BBFFBBFRLL"), 102);
+}
 
+#[test]
+fn test_col() {
     assert_eq!(col("BFFFBBFRRR"), 7);
     assert_eq!(col("FFFBBBFRRR"), 7);
     assert_eq!(col("BBFFBBFRLL"), 4);
+}
+
+#[test]
+fn test_cumsum() {
+    assert_eq!(cumsum(3), 6);
+    assert_eq!(cumsum(4), 10);
 }
