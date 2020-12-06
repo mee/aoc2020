@@ -179,30 +179,26 @@ fn day4() {
         lazy_static! { static ref REQUIRED_KEYS: Vec<&'static str> = vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid", /*"cid"*/]; }
         for required_key in REQUIRED_KEYS.iter() {
             if !kvs.contains_key(required_key) {
-                println!("Passport {:?} missing required key: {}", kvs, required_key);
                 return false;
             }
         }
 
         if !kvs["byr"].parse::<usize>().map(|v| v >= 1920 && v <= 2002).unwrap() {
-            println!("Passport contains invalid birth year: {}", kvs["byr"]);
             return false;
         }
         if !kvs["iyr"].parse::<usize>().map(|v| v >= 2010 && v <= 2020).unwrap() {
-            println!("Passport contains invalid issue year: {}", kvs["iyr"]);
             return false;
         }
         if !kvs["eyr"].parse::<usize>().map(|v| v >= 2020 && v <= 2030).unwrap() {
-            println!("Passport contains invalid expiry year: {}", kvs["eyr"]);
             return false;
         }
 
         lazy_static! { static ref RE_HGT: Regex = Regex::new(r"^(\d{2,3})(cm|in)$").unwrap(); }
         if !match RE_HGT.captures(&kvs["hgt"]) {
             Some(caps) => {
-                match dbg!(caps.get(1)).unwrap().as_str().parse::<usize>() {
+                match caps.get(1).unwrap().as_str().parse::<usize>() {
                     Ok(hgt) => {
-                        match dbg!(caps.get(2)) {
+                        match caps.get(2) {
                             Some(unit) if unit.as_str() == "cm" => hgt >= 150 && hgt <= 193,
                             Some(unit) if unit.as_str() == "in" => hgt >= 59 && hgt <= 76,
                             _ => false
@@ -212,32 +208,23 @@ fn day4() {
                 }
             },
             None => false,
-        } {
-            println!("Passport contains invalid height: {:?}", kvs["hgt"]);
-            return false;
-        } else {
-            println!("Passport contains valid height: {:?}", kvs["hgt"]);
-        }
+        } { return false; }
 
         lazy_static! { static ref RE_HCL: Regex = Regex::new(r"^#[a-f0-9]{6}$").unwrap(); }
         if !RE_HCL.is_match(&kvs["hcl"]) {
-            println!("Passport contains invalid hair color: {:?}", kvs["hcl"]);
             return false;
         }
 
         lazy_static! { static ref VALID_ECL: Vec<&'static str> = vec!["amb", "blu", "brn", "gry", "grn", "hzl", "oth"]; }
         if !VALID_ECL.contains(&kvs["ecl"]) {
-            println!("Passport contains invalid eye color: {:?}", kvs["ecl"]);
             return false;
         }
 
         lazy_static! { static ref RE_PID: Regex = Regex::new(r"^\d{9}$").unwrap(); }
         if !RE_PID.is_match(&kvs["pid"]) {
-            println!("Passport contains invalid PID: {:?}", kvs["pid"]);
             return false;
         }
 
-        println!("Found valid passport: {:?}", kvs);
         return true;
     }
 
