@@ -15,6 +15,7 @@ fn main() {
             "1" => day1(),
             "2" => day2(),
             "3" => day3(),
+            "4" => day4(),
             _ => println!("Invalid day specified"),
         }
 }
@@ -150,3 +151,54 @@ fn day3() {
 }
 
 
+// day 4
+fn day4() {
+    use std::collections::HashMap;
+
+    let input = include_str!("4.input");
+
+    /*
+    // don't care about values, but probably will later
+    struct Passport { 
+        byr: &str, // (Birth Year)
+        iyr: &str, // (Issue Year)
+        eyr: &str, // (Expiration Year)
+        hgt: &str, // (Height)
+        hcl: &str, // (Hair Color)
+        ecl: &str, // (Eye Color)
+        pid: &str, // (Passport ID)
+        cid: &str, // (Country ID)
+    }
+    */
+
+    fn is_valid(kvs: &HashMap<&str, &str>) -> bool {
+        for required_key in vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid", /*"cid"*/] {
+            if !kvs.contains_key(required_key) {
+                // println!("Passport {:?} missing required key: {}", kvs, required_key);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    let mut valid = 0;
+    let mut kvs: HashMap<&str, &str> = HashMap::new();
+    for line in input.lines() {
+        if line == "" {
+            if is_valid(&kvs) {
+                valid = valid + 1;
+            }
+            kvs.clear();
+        }
+        for pair in line.split(' ') {
+            let row_pairs = pair.split(':').collect::<Vec<&str>>();
+            if let [key, value] = &row_pairs[..] {
+                kvs.insert(key, value);
+            }
+        }
+    }
+    if is_valid(&kvs) {
+        valid = valid + 1;
+    }
+    println!("Found {} valid passports", valid);
+}
