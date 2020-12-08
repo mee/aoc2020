@@ -22,6 +22,7 @@ fn main() {
             "4" => day4(),
             "5" => day5(),
             "6" => day6(),
+            "7" => day7(),
             _ => println!("Invalid day specified"),
         }
 }
@@ -319,11 +320,11 @@ fn test_cumsum() {
     assert_eq!(cumsum(4), 10);
 }
 
+use std::collections::HashSet;
 // day 6
 fn day6() {
     let input = include_str!("6.input");
 
-    use std::collections::HashSet;
 
     let mut mark = true;
     let mut sum = 0;
@@ -347,3 +348,60 @@ fn day6() {
 
     println!("The sum of common questions per group is {}", sum);
 }
+
+// day 7
+
+// dynamic programming alarm bells going off!
+
+use multimap::MultiMap;
+
+fn day7() {
+    let input = include_str!("7.input");
+
+    // store key `is contained in` value relationships
+    let mut is_contained_in: MultiMap<&str, &str> = MultiMap::new();
+
+    // "muted lime bags contain 1 wavy lime bag, 1 vibrant green bag, 3 light yellow bags."
+    // "dotted teal bags contain no other bags."
+    for line in input.lines() {
+        let parts: Vec<&str> = line.split(" bags contain ").collect();
+        let subject = parts[0];
+        let objects = parts[1];
+        if objects == "no other bags." {
+            continue;
+        } else {
+            let objects = parts[1].split(", ");
+            for object in objects {
+                let object_parts = object
+                    .trim_end_matches(|c| c == '.' || c == ',')
+                    .trim_end_matches("bags")
+                    .trim_end_matches("bag")
+                    .trim_end()
+                    .splitn(2, ' ')
+                    .collect::<Vec<&str>>();
+                is_contained_in.insert(object_parts[1], subject);
+            }
+        }
+    }
+
+    let mut super_colors: HashSet<&str> = HashSet::new();
+    find_colors("shiny gold", &is_contained_in, &mut super_colors);
+
+    println!("A total of {} colors of bags may indirectly contain a shiny gold bag", super_colors.len());
+}
+
+// will die on cyclic rules
+fn find_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>, mut super_colors: &mut HashSet<&'a str>) {
+    match is_contained_in.get_vec(color) {
+        None => (),
+        Some(colors) => {
+            for c in colors {
+                if !super_colors.contains(c) {
+                    super_colors.insert(c);
+                    find_colors(c, &is_contained_in, &mut super_colors);
+                }
+            }
+        }
+    }
+}
+
