@@ -159,8 +159,8 @@ fn day3() {
 
 
 // day 4
+use std::collections::HashMap;
 fn day4() {
-    use std::collections::HashMap;
     use regex::Regex;
 
     let input = include_str!("4.input");
@@ -354,12 +354,14 @@ fn day6() {
 // dynamic programming alarm bells going off!
 
 use multimap::MultiMap;
+//use std::collections::HashMap;
 
 fn day7() {
     let input = include_str!("7.input");
 
     // store key `is contained in` value relationships
     let mut is_contained_in: MultiMap<&str, &str> = MultiMap::new();
+    let mut contains: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
 
     // "muted lime bags contain 1 wavy lime bag, 1 vibrant green bag, 3 light yellow bags."
     // "dotted teal bags contain no other bags."
@@ -379,26 +381,61 @@ fn day7() {
                     .trim_end()
                     .splitn(2, ' ')
                     .collect::<Vec<&str>>();
-                is_contained_in.insert(object_parts[1], subject);
+                let object_count = object_parts[0].parse::<usize>().unwrap();
+                let object_color = object_parts[1];
+                is_contained_in.insert(object_color, subject);
+                match contains.get_mut(subject) {
+                    None => {
+                        let mut inners: HashMap<&str, usize> = HashMap::new();
+                        inners.insert(object_color, object_count);
+                        contains.insert(subject, inners);
+                    },
+                    Some(inners) => {
+                        match inners.get_mut(object_color) {
+                            None => { inners.insert(object_color, object_count); },
+                            Some(inner) => {
+                                *inner = *inner + object_count;
+                            },
+                        }
+                    }
+                }
             }
         }
     }
 
-    let mut super_colors: HashSet<&str> = HashSet::new();
-    find_colors("shiny gold", &is_contained_in, &mut super_colors);
 
-    println!("A total of {} colors of bags may indirectly contain a shiny gold bag", super_colors.len());
+    let my_color = "shiny gold";
+    
+    let mut super_colors: HashSet<&str> = HashSet::new();
+    find_super_colors(my_color, &is_contained_in, &mut super_colors);
+    println!("A total of {} colors of bags may indirectly contain a {} bag", super_colors.len(), my_color);
+    let inner_bag_count = find_total_bag_count(my_color, &contains) - 1; // minus my_color bag
+    println!("A {} bag contains {} inner bags", my_color, inner_bag_count);
 }
 
-// will die on cyclic rules
-fn find_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>, mut super_colors: &mut HashSet<&'a str>) {
+fn find_total_bag_count<'a>(color: &str, contains: &HashMap<&str, HashMap<&str, usize>>) -> usize {
+    match contains.get(color) {
+        None => 1, // just me myself, ma'am
+        Some(inners) => {
+            let mut icc = 1; // inner color count; starting with just me
+            for (inner, count) in inners {
+                if &color != inner {
+                    icc = icc + count * find_total_bag_count(inner, &contains);
+                }
+            }
+            return icc;
+        }
+    }
+}
+
+fn find_super_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>, mut super_colors: &mut HashSet<&'a str>) {
     match is_contained_in.get_vec(color) {
         None => (),
         Some(colors) => {
             for c in colors {
                 if !super_colors.contains(c) {
                     super_colors.insert(c);
-                    find_colors(c, &is_contained_in, &mut super_colors);
+                    find_super_colors(c, &is_contained_in, &mut super_colors);
                 }
             }
         }
