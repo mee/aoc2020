@@ -433,8 +433,7 @@ fn find_super_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>,
         None => (),
         Some(colors) => {
             for c in colors {
-                if !super_colors.contains(c) {
-                    super_colors.insert(c);
+                if super_colors.insert(c) {
                     find_super_colors(c, &is_contained_in, &mut super_colors);
                 }
             }
