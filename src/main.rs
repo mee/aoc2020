@@ -23,6 +23,7 @@ fn main() {
             "5" => day5(),
             "6" => day6(),
             "7" => day7(),
+            "8" => day8(),
             _ => println!("Invalid day specified"),
         }
 }
@@ -441,3 +442,28 @@ fn find_super_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>,
     }
 }
 
+// day 8
+fn day8() {
+    let input = include_str!("8.input");
+
+    fn process_line(s: &str) -> (&str, isize) {
+        let parts = s.splitn(2, ' ').collect::<Vec<&str>>();
+        (parts[0], parts[1].parse::<isize>().unwrap())
+    }
+
+    let cmds = input.lines().map(|s| process_line(s)).collect::<Vec<(&str, isize)>>();
+    let mut index = 0;
+    let mut accum = 0;
+    let mut seen: HashSet<usize> = HashSet::new();
+    while !seen.contains(dbg!(&index)) {
+        seen.insert(index);
+        let line = cmds[index];
+        match line.0 {
+            "nop" => { index += 1; },
+            "acc" => { index += 1; accum = (accum as isize + line.1) as usize; },
+            "jmp" => { index = (index as isize + line.1) as usize},
+            _ => panic!("bad instruction"),
+        }
+    }
+    println!("Accumulator had value {} when we encountered index {} for the second time", accum, index);
+}
