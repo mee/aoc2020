@@ -1,4 +1,4 @@
-use clap::{Arg, App};
+use clap::{App, Arg};
 use num_traits::pow;
 
 #[macro_use]
@@ -8,46 +8,50 @@ fn main() {
     let matches = App::new("Advent of Code 2020")
         .version("1.0.0")
         .author("Mike Erickson <mike.erickson@gmail.com>")
-        .arg(Arg::with_name("day")
-             .short("d")
-             .long("day")
-             .takes_value(true)
-             .help("day or exercise"))
+        .arg(
+            Arg::with_name("day")
+                .short("d")
+                .long("day")
+                .takes_value(true)
+                .help("day or exercise"),
+        )
         .get_matches();
 
-        match matches.value_of("day").expect("day not specfied") {
-            "1" => day1(),
-            "2" => day2(),
-            "3" => day3(),
-            "4" => day4(),
-            "5" => day5(),
-            "6" => day6(),
-            "7" => day7(),
-            "8" => day8(),
-            _ => println!("Invalid day specified"),
-        }
+    match matches.value_of("day").expect("day not specfied") {
+        "1" => day1(),
+        "2" => day2(),
+        "3" => day3(),
+        "4" => day4(),
+        "5" => day5(),
+        "6" => day6(),
+        "7" => day7(),
+        "8" => day8::day8(),
+        _ => println!("Invalid day specified"),
+    }
 }
 
 // day 1
 fn day1() {
-
     let reader = include_str!("1.input");
 
-	let mut nums = Vec::<usize>::new();
-	for line in reader.lines() {
-		nums.push(line.parse().unwrap());
-	}
+    let mut nums = Vec::<usize>::new();
+    for line in reader.lines() {
+        nums.push(line.parse().unwrap());
+    }
 
-	nums.sort();
+    nums.sort();
 
-	if let Some(product) = test2(&nums, 2020, 0, nums.len()-1) {
-		println!("product of two numbers that sum to 2020: {}", product);
-	}
+    if let Some(product) = test2(&nums, 2020, 0, nums.len() - 1) {
+        println!("product of two numbers that sum to 2020: {}", product);
+    }
 
-    for j in 1..nums.len()-2 {
+    for j in 1..nums.len() - 2 {
         let value = nums.remove(j);
-        if let Some(product) = test2(&nums, 2020 - value, 0, nums.len()-1) {
-            println!("product of three numbers that sum to 2020 {}", product * value);
+        if let Some(product) = test2(&nums, 2020 - value, 0, nums.len() - 1) {
+            println!(
+                "product of three numbers that sum to 2020 {}",
+                product * value
+            );
             break;
         } else {
             nums.insert(j, value);
@@ -55,19 +59,19 @@ fn day1() {
     }
 }
 
-fn test2(list : &[usize], desired_sum: usize, i : usize, j : usize) -> Option<usize> {
-	if i == j {
-		return None;
-	} else {
-		let sum = list[i] + list[j];
-		if sum == desired_sum {
-			return Some(list[i] * list[j]);
-		} else if sum > desired_sum {
-			return test2(list, desired_sum, i, j-1);
-		} else {
-			return test2(list, desired_sum, i+1, j);
-		}
-	}
+fn test2(list: &[usize], desired_sum: usize, i: usize, j: usize) -> Option<usize> {
+    if i == j {
+        return None;
+    } else {
+        let sum = list[i] + list[j];
+        if sum == desired_sum {
+            return Some(list[i] * list[j]);
+        } else if sum > desired_sum {
+            return test2(list, desired_sum, i, j - 1);
+        } else {
+            return test2(list, desired_sum, i + 1, j);
+        }
+    }
 }
 
 // day 2
@@ -79,8 +83,8 @@ fn day2() {
     let mut valid2 = 0;
     let mut total = 0;
     for line in input.lines() {
-        let tokens : Vec<&str> = line.split(' ').collect();
-        let range : Vec<&str> = tokens[0].split("-").collect();
+        let tokens: Vec<&str> = line.split(' ').collect();
+        let range: Vec<&str> = tokens[0].split("-").collect();
         let letter = tokens[1].chars().nth(0).unwrap();
         let password = tokens[2];
 
@@ -92,8 +96,8 @@ fn day2() {
             valid = valid + 1;
         }
 
-        let low_char = password.chars().nth(low-1).unwrap();
-        let high_char = password.chars().nth(high-1).unwrap();
+        let low_char = password.chars().nth(low - 1).unwrap();
+        let high_char = password.chars().nth(high - 1).unwrap();
 
         if low_char == letter {
             if high_char != letter {
@@ -107,8 +111,14 @@ fn day2() {
         total = total + 1;
     }
 
-    println!("{} of {} passwords are valid according to policy 1", valid, total);
-    println!("{} of {} passwords are valid according to policy 2", valid2, total);
+    println!(
+        "{} of {} passwords are valid according to policy 1",
+        valid, total
+    );
+    println!(
+        "{} of {} passwords are valid according to policy 2",
+        valid2, total
+    );
 }
 
 // day 3
@@ -116,10 +126,20 @@ fn day3() {
     let input = include_str!("3.input");
 
     #[derive(Copy, Clone, Debug)]
-    struct Cursor { pos: usize, right: usize, down: usize, trees: usize };
+    struct Cursor {
+        pos: usize,
+        right: usize,
+        down: usize,
+        trees: usize,
+    };
     impl Cursor {
         fn new(r: usize, d: usize) -> Cursor {
-            return Cursor { pos: 0, right: r, down: d, trees: 0 };
+            return Cursor {
+                pos: 0,
+                right: r,
+                down: d,
+                trees: 0,
+            };
         }
         fn shift(&mut self, width: usize) {
             self.pos = (self.pos + self.right) % (width + 1);
@@ -140,7 +160,7 @@ fn day3() {
     for (index, line) in input.lines().enumerate() {
         if index == 0 {
             width = line.len() - 1;
-            continue
+            continue;
         }
         for cursor in &mut cursors {
             if (index % cursor.down) == 0 {
@@ -158,7 +178,6 @@ fn day3() {
     println!("Found {} trees", trees);
 }
 
-
 // day 4
 use std::collections::HashMap;
 fn day4() {
@@ -168,7 +187,7 @@ fn day4() {
 
     /*
     // don't care about values, but probably will later
-    struct Passport { 
+    struct Passport {
         byr: &str, // (Birth Year)
         iyr: &str, // (Issue Year)
         eyr: &str, // (Expiration Year)
@@ -188,44 +207,63 @@ fn day4() {
             }
         }
 
-        if !kvs["byr"].parse::<usize>().map(|v| v >= 1920 && v <= 2002).unwrap() {
+        if !kvs["byr"]
+            .parse::<usize>()
+            .map(|v| v >= 1920 && v <= 2002)
+            .unwrap()
+        {
             return false;
         }
-        if !kvs["iyr"].parse::<usize>().map(|v| v >= 2010 && v <= 2020).unwrap() {
+        if !kvs["iyr"]
+            .parse::<usize>()
+            .map(|v| v >= 2010 && v <= 2020)
+            .unwrap()
+        {
             return false;
         }
-        if !kvs["eyr"].parse::<usize>().map(|v| v >= 2020 && v <= 2030).unwrap() {
+        if !kvs["eyr"]
+            .parse::<usize>()
+            .map(|v| v >= 2020 && v <= 2030)
+            .unwrap()
+        {
             return false;
         }
 
-        lazy_static! { static ref RE_HGT: Regex = Regex::new(r"^(\d{2,3})(cm|in)$").unwrap(); }
+        lazy_static! {
+            static ref RE_HGT: Regex = Regex::new(r"^(\d{2,3})(cm|in)$").unwrap();
+        }
         if !match RE_HGT.captures(&kvs["hgt"]) {
-            Some(caps) => {
-                match caps.get(1).unwrap().as_str().parse::<usize>() {
-                    Ok(hgt) => {
-                        match caps.get(2) {
-                            Some(unit) if unit.as_str() == "cm" => hgt >= 150 && hgt <= 193,
-                            Some(unit) if unit.as_str() == "in" => hgt >= 59 && hgt <= 76,
-                            _ => false
-                        }
-                    },
-                    Err(_) => false,
-                }
+            Some(caps) => match caps.get(1).unwrap().as_str().parse::<usize>() {
+                Ok(hgt) => match caps.get(2) {
+                    Some(unit) if unit.as_str() == "cm" => hgt >= 150 && hgt <= 193,
+                    Some(unit) if unit.as_str() == "in" => hgt >= 59 && hgt <= 76,
+                    _ => false,
+                },
+                Err(_) => false,
             },
             None => false,
-        } { return false; }
+        } {
+            return false;
+        }
 
-        lazy_static! { static ref RE_HCL: Regex = Regex::new(r"^#[a-f0-9]{6}$").unwrap(); }
+        lazy_static! {
+            static ref RE_HCL: Regex = Regex::new(r"^#[a-f0-9]{6}$").unwrap();
+        }
         if !RE_HCL.is_match(&kvs["hcl"]) {
             return false;
         }
 
-        lazy_static! { static ref VALID_ECL: Vec<&'static str> = vec!["amb", "blu", "brn", "gry", "grn", "hzl", "oth"]; }
+        lazy_static! {
+            static ref VALID_ECL: Vec<&'static str> =
+                vec!["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
+        }
         if !VALID_ECL.contains(&kvs["ecl"]) {
             return false;
         }
 
-        lazy_static! { static ref RE_PID: Regex = Regex::new(r"^\d{9}$").unwrap(); }
+        lazy_static! {
+            static ref RE_PID: Regex = Regex::new(r"^\d{9}$").unwrap();
+        }
         if !RE_PID.is_match(&kvs["pid"]) {
             return false;
         }
@@ -260,7 +298,9 @@ fn day4() {
 fn row(pass: &str) -> usize {
     let mut row = 0;
     for (index, ch) in pass.chars().take(7).enumerate() {
-        if ch == 'B' { row = row + pow(2, 7 - index - 1); }
+        if ch == 'B' {
+            row = row + pow(2, 7 - index - 1);
+        }
     }
     return row;
 }
@@ -268,13 +308,15 @@ fn row(pass: &str) -> usize {
 fn col(pass: &str) -> usize {
     let mut col = 0;
     for (index, ch) in pass.chars().skip(7).enumerate() {
-        if ch == 'R' { col = col + pow(2, 3 - index - 1); }
+        if ch == 'R' {
+            col = col + pow(2, 3 - index - 1);
+        }
     }
     return col;
 }
 
 // closed form solution for sum(i..k)
-fn cumsum(k: usize) -> usize{
+fn cumsum(k: usize) -> usize {
     k * (k + 1) / 2
 }
 
@@ -325,7 +367,6 @@ use std::collections::HashSet;
 // day 6
 fn day6() {
     let input = include_str!("6.input");
-
 
     let mut mark = true;
     let mut sum = 0;
@@ -390,26 +431,29 @@ fn day7() {
                         let mut inners: HashMap<&str, usize> = HashMap::new();
                         inners.insert(object_color, object_count);
                         contains.insert(subject, inners);
-                    },
-                    Some(inners) => {
-                        match inners.get_mut(object_color) {
-                            None => { inners.insert(object_color, object_count); },
-                            Some(inner) => {
-                                *inner = *inner + object_count;
-                            },
-                        }
                     }
+                    Some(inners) => match inners.get_mut(object_color) {
+                        None => {
+                            inners.insert(object_color, object_count);
+                        }
+                        Some(inner) => {
+                            *inner = *inner + object_count;
+                        }
+                    },
                 }
             }
         }
     }
 
-
     let my_color = "shiny gold";
-    
+
     let mut super_colors: HashSet<&str> = HashSet::new();
     find_super_colors(my_color, &is_contained_in, &mut super_colors);
-    println!("A total of {} colors of bags may indirectly contain a {} bag", super_colors.len(), my_color);
+    println!(
+        "A total of {} colors of bags may indirectly contain a {} bag",
+        super_colors.len(),
+        my_color
+    );
     let inner_bag_count = find_total_bag_count(my_color, &contains) - 1; // minus my_color bag
     println!("A {} bag contains {} inner bags", my_color, inner_bag_count);
 }
@@ -429,7 +473,11 @@ fn find_total_bag_count<'a>(color: &str, contains: &HashMap<&str, HashMap<&str, 
     }
 }
 
-fn find_super_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>, mut super_colors: &mut HashSet<&'a str>) {
+fn find_super_colors<'a>(
+    color: &str,
+    is_contained_in: &MultiMap<&str, &'a str>,
+    mut super_colors: &mut HashSet<&'a str>,
+) {
     match is_contained_in.get_vec(color) {
         None => (),
         Some(colors) => {
@@ -442,28 +490,115 @@ fn find_super_colors<'a>(color: &str, is_contained_in: &MultiMap<&str, &'a str>,
     }
 }
 
-// day 8
-fn day8() {
-    let input = include_str!("8.input");
+mod day8 {
+    use std::collections::HashSet;
+    use std::str::FromStr;
 
-    fn process_line(s: &str) -> (&str, isize) {
-        let parts = s.splitn(2, ' ').collect::<Vec<&str>>();
-        (parts[0], parts[1].parse::<isize>().unwrap())
+    #[derive(Debug, Clone, PartialEq)]
+    enum Operation {
+        Nop(isize),
+        Jmp(isize),
+        Acc(isize),
     }
+    #[derive(Debug, Clone)]
+    struct OperationError;
 
-    let cmds = input.lines().map(|s| process_line(s)).collect::<Vec<(&str, isize)>>();
-    let mut index = 0;
-    let mut accum = 0;
-    let mut seen: HashSet<usize> = HashSet::new();
-    while !seen.contains(dbg!(&index)) {
-        seen.insert(index);
-        let line = cmds[index];
-        match line.0 {
-            "nop" => { index += 1; },
-            "acc" => { index += 1; accum = (accum as isize + line.1) as usize; },
-            "jmp" => { index = (index as isize + line.1) as usize},
-            _ => panic!("bad instruction"),
+    impl FromStr for Operation {
+        type Err = OperationError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let parts = s.splitn(2, ' ').collect::<Vec<&str>>();
+            let value = parts[1].parse::<isize>().unwrap();
+            let op = match parts[0] {
+                "jmp" => Operation::Jmp(value),
+                "acc" => Operation::Acc(value),
+                "nop" => Operation::Nop(value),
+                _ => panic!("bad operation"),
+            };
+            Ok(op)
         }
     }
-    println!("Accumulator had value {} when we encountered index {} for the second time", accum, index);
+
+    #[derive(Debug, PartialEq, Clone)]
+    struct Command {
+        index: usize,
+        op: Operation,
+    }
+
+    impl Command {
+        fn new(index: usize, op: Operation) -> Command {
+            Command {
+                index: index,
+                op: op,
+            }
+        }
+    }
+    struct ExecutionError;
+
+    fn execute(
+        index: usize,
+        cmds: &Vec<Command>,
+        seen: &mut HashSet<usize>,
+    ) -> Result<isize, ExecutionError> {
+        if index == cmds.len() {
+            Ok(0)
+        } else if seen.contains(&index) {
+            eprintln!("Found loop at index {}", index);
+            Err(ExecutionError)
+        } else {
+            seen.insert(index);
+            eprintln!("Executing {:?}", &cmds[index]);
+            match &cmds[index].op {
+                Operation::Jmp(offset)
+                    if (index as isize + offset) as usize > 0
+                        && ((index as isize + offset) as usize) < cmds.len() =>
+                {
+                    execute((index as isize + offset) as usize, &cmds, seen)
+                }
+                Operation::Acc(addend) => {
+                    execute(index + 1, cmds, seen).and_then(|res| Ok(res + addend))
+                }
+                _ => execute(index + 1, cmds, seen),
+            }
+        }
+    }
+
+    fn flip(index: usize, cmds: &mut Vec<Command>) {
+        eprintln!("Flipping {:?}", cmds[index]);
+        cmds[index].op = match cmds[index].op {
+            Operation::Jmp(value) => Operation::Nop(value),
+            Operation::Nop(value) => Operation::Jmp(value),
+            _ => panic!("bad operation"),
+        };
+    }
+
+    // day 8
+    pub fn day8() {
+        let input = include_str!("8.input");
+
+        let mut cmds = input
+            .lines()
+            .enumerate()
+            .map(|(i, s)| Command::new(i, s.parse::<Operation>().unwrap()))
+            .collect::<Vec<Command>>();
+
+        for index in 0..cmds.len() {
+            match cmds[index].op {
+                Operation::Nop(_) | Operation::Jmp(_) => {
+                    flip(index, &mut cmds);
+                    match execute(0, &cmds, &mut HashSet::new()) {
+                        Ok(accum) => {
+                            println!("Terminated with accumulator value {}", accum);
+                            break;
+                        }
+                        _ => {
+                            flip(index, &mut cmds);
+                            continue;
+                        }
+                    }
+                }
+                _ => continue,
+            }
+        }
+    }
 }
