@@ -26,6 +26,7 @@ fn main() {
         "6" => day6(),
         "7" => day7(),
         "8" => day8::day8(),
+        "9" => day9::day9(),
         _ => println!("Invalid day specified"),
     }
 }
@@ -599,6 +600,37 @@ mod day8 {
                     }
                 }
                 _ => continue,
+            }
+        }
+    }
+}
+
+mod day9 {
+
+    const PREAMBLE: usize = 25;
+
+    fn is_valid(index: usize, nums: &Vec<usize>) -> bool {
+        for i in (index-25)..index-1 {
+            for j in i..index {
+                if nums[i] + nums[j] == nums[index] {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    pub fn day9() {
+        let input = include_str!("9.input");
+
+        let nums = input
+            .lines()
+            .map(|l| l.parse::<usize>().unwrap())
+            .collect::<Vec<usize>>();
+    
+        for i in PREAMBLE..nums.len() - 1 {
+            if !is_valid(i, &nums) {
+                println!("Found {} which is not valid", &nums[i]);
             }
         }
     }
