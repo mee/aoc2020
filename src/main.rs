@@ -610,7 +610,7 @@ mod day9 {
     const PREAMBLE: usize = 25;
 
     fn is_valid(index: usize, nums: &Vec<usize>) -> bool {
-        for i in (index-25)..index-1 {
+        for i in (index - 25)..index - 1 {
             for j in i..index {
                 if nums[i] + nums[j] == nums[index] {
                     return true;
@@ -620,17 +620,50 @@ mod day9 {
         return false;
     }
 
+    // only works on sorted lists, but preamble may not be sorted...
+    fn creep_for_sum(val: usize, nums: &Vec<usize>) -> (usize, usize) {
+        let mut tail = 0;
+        let mut head = 1;
+        let mut runsum = nums[tail] + nums[head];
+        while tail < nums.len() {
+            if runsum < val {
+                head += 1;
+                runsum += nums[head];
+            } else if runsum > val {
+                runsum -= nums[tail];
+                tail += 1;
+                if head == tail {
+                    head += 1;
+                    runsum += nums[head];
+                }
+            } else {
+                break;
+            }
+        }
+
+        let mut min = runsum;
+        let mut max = 0;
+        for num in nums[tail..head].iter() {
+            if num > &max {
+                max = *num;
+            }
+            if num < &min {
+                min = *num;
+            }
+        }
+        (min, max)
+    }
+
     pub fn day9() {
         let input = include_str!("9.input");
 
-        let nums = input
-            .lines()
-            .map(|l| l.parse::<usize>().unwrap())
-            .collect::<Vec<usize>>();
-    
-        for i in PREAMBLE..nums.len() - 1 {
+        let nums: Vec<usize> = input.lines().map(|l| l.parse::<usize>().unwrap()).collect();
+
+        for i in PREAMBLE..(nums.len() - 1) {
             if !is_valid(i, &nums) {
                 println!("Found {} which is not valid", &nums[i]);
+                let (min, max) = creep_for_sum(nums[i], &nums);
+                println!("Sum of smallest and largest in running sum to invalid number: {}", min + max);
             }
         }
     }
