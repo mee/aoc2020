@@ -551,13 +551,14 @@ mod day8 {
             match &cmds[index].op {
                 Operation::Jmp(offset)
                     if (index as isize + offset) as usize > 0
-                        && ((index as isize + offset) as usize) < cmds.len() =>
+                        && ((index as isize + offset) as usize) <= cmds.len() =>
                 {
                     execute((index as isize + offset) as usize, &cmds, seen)
                 }
                 Operation::Acc(addend) => {
                     execute(index + 1, cmds, seen).and_then(|res| Ok(res + addend))
                 }
+                Operation::Jmp(_) => Err(ExecutionError), // jumps off cmds
                 _ => execute(index + 1, cmds, seen),
             }
         }
