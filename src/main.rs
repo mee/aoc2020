@@ -27,6 +27,7 @@ fn main() {
         "7" => day7(),
         "8" => day8::day8(),
         "9" => day9::day9(),
+        "10" => day10::day10(),
         _ => println!("Invalid day specified"),
     }
 }
@@ -667,4 +668,79 @@ mod day9 {
             }
         }
     }
+}
+
+// day 10
+mod day10 {
+    pub fn day10() {
+        let mut adapters = include_str!("10.input").lines()
+        .map(|l| l.parse::<usize>().unwrap()).collect::<Vec<usize>>();
+        adapters.sort();
+        if let Some(stats) = joltage_summary_stat(0, &mut adapters) {
+            println!("The product of one-jumps and three-jumps is {}", stats.0*stats.1);
+        } else {
+            println!("No valid combinations of adapters found");
+        }
+    }
+
+    // requires `adapters` be sorted - Vec::is_sorted() experimental in stable...
+    pub fn joltage_summary_stat(output: usize, adapters: &mut Vec<usize>) -> Option<(usize, usize)> {
+        if adapters.len() == 1 {
+            if output > adapters[0] {
+                return None;
+            } else {
+                return match adapters[0] - output {
+                    1 => Some((1, 1)), /* account for final jump of three at end */
+                    2 => Some((0, 1)),
+                    3 => Some((0, 2)),
+                    _ => None,
+                }
+            }
+        }
+
+        assert!(!adapters.is_empty());
+
+        let mut i = 0;
+        while adapters[i] <= output + 3 {
+            let value = adapters.remove(i);
+            match joltage_summary_stat(value, adapters) {
+                Some((o,t)) => {
+                    if value - output == 1 {
+                        return Some((o + 1, t));
+                    } else if value - output == 3 {
+                        return Some((o, t + 1));
+                    } else {
+                        return Some((o, t));
+                    }
+                },
+                None => {
+                    adapters.insert(i, value);
+                    if i < adapters.len() - 1 {
+                        i += 1;
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    #[test]
+    fn test1() {
+        let mut adapters = vec![16, 10, 15, 5, 1, 11, 7, 19, 6, 12, 4];
+        adapters.sort();
+        assert_eq!(joltage_summary_stat(0, &mut adapters), Some((7,5)));
+    }
+
+    #[test]
+    fn test2() {
+        let mut adapters = vec![28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 
+        45, 19, 38, 39, 11, 1, 32, 25, 35, 8, 17, 7, 9, 4, 2, 34, 10, 3];
+
+        adapters.sort();
+        assert_eq!(joltage_summary_stat(0, &mut adapters), Some((22,10)));
+    }
+
 }
