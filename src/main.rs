@@ -888,7 +888,9 @@ mod day11 {
             let mut adjacents: Vec<SeatStatus> = Vec::new();
             for ri in rlb..=rub {
                 for ci in clb..=cub {
-                    if ri == r && ci == c { continue; }
+                    if ri == r && ci == c {
+                        continue;
+                    }
                     adjacents.push(self.get(ri, ci).unwrap());
                 }
             }
@@ -899,8 +901,10 @@ mod day11 {
             let mut dirs: Vec<(isize, isize)> = vec![];
             for i in -1..=1 {
                 for j in -1..=1 {
-                    if i == 0 && j == 0 { continue; }
-                    dirs.push( (i,j) );
+                    if i == 0 && j == 0 {
+                        continue;
+                    }
+                    dirs.push((i, j));
                 }
             }
 
@@ -939,8 +943,14 @@ mod day11 {
                 return SeatStatus::Floor;
             }
 
-            let adj_count = if adj { self.adjacents(r, c) } else { self.seats_in_los(r, c) }
-                .iter().filter(|x| **x == SeatStatus::Occupied).count();
+            let adj_count = if adj {
+                self.adjacents(r, c)
+            } else {
+                self.seats_in_los(r, c)
+            }
+            .iter()
+            .filter(|x| **x == SeatStatus::Occupied)
+            .count();
 
             let adj_count_too_high = adj_count >= if adj { 4 } else { 5 };
 
@@ -1023,8 +1033,14 @@ mod day11 {
     pub fn day11() {
         let input = include_str!("11.input");
         let map = input.parse::<SeatMap>().unwrap();
-        println!("Using adjacency, {} seats were finally occupied", map.finally_occupied(true));
-        println!("Using visibility, {} seats were finally occupied", map.finally_occupied(false));
+        println!(
+            "Using adjacency, {} seats were finally occupied",
+            map.finally_occupied(true)
+        );
+        println!(
+            "Using visibility, {} seats were finally occupied",
+            map.finally_occupied(false)
+        );
     }
 
     #[cfg(test)]
@@ -1088,17 +1104,16 @@ L.LLLLL.LL";
             assert_eq!(map.finally_occupied(true), 37);
         }
 
-		#[test]
-		fn none_visible() {
-			let map = INPUT3.parse::<SeatMap>().unwrap();
-			assert!(map.seats_in_los(3, 3).is_empty());
-		}
+        #[test]
+        fn none_visible() {
+            let map = INPUT3.parse::<SeatMap>().unwrap();
+            assert!(map.seats_in_los(3, 3).is_empty());
+        }
 
-		#[test]
-		fn finally_occupied_visible() {
-			let map = INPUT1.parse::<SeatMap>().unwrap();
+        #[test]
+        fn finally_occupied_visible() {
+            let map = INPUT1.parse::<SeatMap>().unwrap();
             assert_eq!(map.finally_occupied(false), 26);
-		}
+        }
     }
 }
-
