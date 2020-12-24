@@ -29,6 +29,7 @@ fn main() {
         "9" => day9::day9(),
         "10" => day10::day10(),
         "11" => day11::day11(),
+        "12" => day12::day12(),
         _ => println!("Invalid day specified"),
     }
 }
@@ -1114,6 +1115,119 @@ L.LLLLL.LL";
         fn finally_occupied_visible() {
             let map = INPUT1.parse::<SeatMap>().unwrap();
             assert_eq!(map.finally_occupied(false), 26);
+        }
+    }
+}
+
+mod day12 {
+    use std::str::FromStr;
+
+    pub fn day12() {
+        let commands = include_str!("12.input")
+            .lines()
+            .map(|l| l.parse::<Command>().unwrap())
+            .collect();
+
+        println!("The Manhattan distance is {}", distance(commands));
+    }
+
+    #[derive(Debug, PartialEq)]
+    pub enum Command {
+        N(isize),
+        S(isize),
+        E(isize),
+        W(isize),
+        L(isize),
+        R(isize),
+        F(isize),
+    }
+
+    type State = (isize, isize, isize);
+
+    #[derive(Debug, Clone, Copy)]
+    pub struct ParseError;
+
+    impl FromStr for Command {
+        type Err = ParseError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let action = &s[0..1];
+            let value = &s[1..].parse::<isize>().unwrap();
+            match action {
+                "N" => Ok(Command::N(*value)),
+                "S" => Ok(Command::S(*value)),
+                "E" => Ok(Command::E(*value)),
+                "W" => Ok(Command::W(*value)),
+                "L" => Ok(Command::L(*value)),
+                "R" => Ok(Command::R(*value)),
+                "F" => Ok(Command::F(*value)),
+                _ => Err(ParseError),
+            }
+        }
+    }
+
+    fn distance(cmds: Vec<Command>) -> usize {
+        let mut state: State = (0, 0, 0); // x, y, heading; 0 degrees is East
+        for cmd in cmds {
+            state = apply(cmd, state);
+        }
+        manhattan_distance(state)
+    }
+
+    pub fn apply(cmd: Command, state: State) -> State {
+        match cmd {
+            Command::N(d) => (state.0, state.1 + d, state.2),
+            Command::S(d) => (state.0, state.1 - d, state.2),
+            Command::E(d) => (state.0 + d, state.1, state.2),
+            Command::W(d) => (state.0 - d, state.1, state.2),
+            Command::L(d) => (state.0, state.1, (state.2 + (360 - d)) % 360), /* could also solve this by varying d over (-180, 180) instead of (0, 360) */
+            Command::R(d) => (state.0, state.1, (state.2 + d) % 360),
+            Command::F(d) => {
+                let new_cmd = match state.2 {
+                    0 => Command::E(d),
+                    90 => Command::S(d),
+                    180 => Command::W(d),
+                    270 => Command::N(d),
+                    x => panic!("no way {}", x),
+                };
+                apply(new_cmd, state)
+            }
+        }
+    }
+
+    fn manhattan_distance(state: State) -> usize {
+        (state.0.abs() + state.1.abs()) as usize
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        const INPUT1: &str = "F10
+N3
+F7
+R90
+F11";
+
+        #[test]
+        fn parse_example() {
+            let commands: Vec<Command> = INPUT1
+                .lines()
+                .map(|l| l.parse::<Command>().unwrap())
+                .collect();
+            assert_eq!(commands[0], Command::F(10));
+            assert_eq!(commands[1], Command::N(3));
+            assert_eq!(commands[2], Command::F(7));
+            assert_eq!(commands[3], Command::R(90));
+            assert_eq!(commands[4], Command::F(11));
+        }
+
+        #[test]
+        fn example() {
+            let commands: Vec<Command> = INPUT1
+                .lines()
+                .map(|l| l.parse::<Command>().unwrap())
+                .collect();
+            assert_eq!(distance(commands), 25);
         }
     }
 }
