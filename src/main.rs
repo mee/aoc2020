@@ -1128,7 +1128,8 @@ mod day12 {
             .map(|l| l.parse::<Command>().unwrap())
             .collect();
 
-        println!("The Manhattan distance is {}", distance(commands));
+        println!("The Manhattan distance is {}", distance(&commands));
+        println!("The manhattan distance is {} (waypoint method)", distance2(&commands));
     }
 
     #[derive(Debug, PartialEq)]
@@ -1143,6 +1144,7 @@ mod day12 {
     }
 
     type State = (isize, isize, isize);
+    type WaypointState = (isize, isize, isize, isize); // x,y of ship, waypoint offset
 
     #[derive(Debug, Clone, Copy)]
     pub struct ParseError;
@@ -1165,15 +1167,23 @@ mod day12 {
         }
     }
 
-    fn distance(cmds: Vec<Command>) -> usize {
+    fn distance(cmds: &Vec<Command>) -> usize {
         let mut state: State = (0, 0, 0); // x, y, heading; 0 degrees is East
         for cmd in cmds {
-            state = apply(cmd, state);
+            state = apply(&cmd, state);
         }
-        manhattan_distance(state)
+        (state.0.abs() + state.1.abs()) as usize
     }
 
-    pub fn apply(cmd: Command, state: State) -> State {
+    fn distance2(cmds: &Vec<Command>) -> usize {
+        let mut state: WaypointState = (0, 0, 10, 1); // x, y of ship, waypoint offset
+        for cmd in cmds {
+            state = apply2(&cmd, state);
+        }
+        (state.0.abs() + state.1.abs()) as usize
+    }
+
+    pub fn apply(cmd: &Command, state: State) -> State {
         match cmd {
             Command::N(d) => (state.0, state.1 + d, state.2),
             Command::S(d) => (state.0, state.1 - d, state.2),
@@ -1183,19 +1193,55 @@ mod day12 {
             Command::R(d) => (state.0, state.1, (state.2 + d) % 360),
             Command::F(d) => {
                 let new_cmd = match state.2 {
-                    0 => Command::E(d),
-                    90 => Command::S(d),
-                    180 => Command::W(d),
-                    270 => Command::N(d),
+                    0 => Command::E(*d),
+                    90 => Command::S(*d),
+                    180 => Command::W(*d),
+                    270 => Command::N(*d),
                     x => panic!("no way {}", x),
                 };
-                apply(new_cmd, state)
+                apply(&new_cmd, state)
             }
         }
     }
 
-    fn manhattan_distance(state: State) -> usize {
-        (state.0.abs() + state.1.abs()) as usize
+    /* R = 90 so rotation matrix is
+     * [ cos 90 ; -sin 90 ] = [ 0 ; -1 ]
+     * [ sin 90 ; cos 90  ]   [ 1 ;  0 ]
+     *
+     * L = -90 so rotation matrix is
+     * [ 0  ; 1 ]
+     * [ -1 ; 0 ]
+     *
+     * r = [ x y ];
+     * Rr = [ (cos T)x - (sin T)y ; (sin T)x + (cos T)y ]
+     *
+     */
+
+    fn rotate_left(d: isize, state: &mut WaypointState) -> WaypointState {
+        for _ in 0..(d/90).abs() {
+            *state = (state.0, state.1, -state.3, state.2);
+        }
+        *state
+    }
+
+    fn rotate_right(d: isize, state: &mut WaypointState) -> WaypointState {
+        for _ in 0..(d/90).abs() {
+            *state = (state.0, state.1, state.3, -state.2);
+        }
+        *state
+    }
+
+    // part 2
+    pub fn apply2(cmd: &Command, state: WaypointState) -> WaypointState {
+        match cmd {
+            Command::N(d) => (state.0, state.1, state.2, state.3 + d),
+            Command::S(d) => (state.0, state.1, state.2, state.3 - d),
+            Command::E(d) => (state.0, state.1, state.2 + d, state.3),
+            Command::W(d) => (state.0, state.1, state.2 - d, state.3),
+            Command::L(d) => rotate_left(*d, &mut state.clone()),
+            Command::R(d) => rotate_right(*d, &mut state.clone()),
+            Command::F(d) => (state.0 + d * state.2, state.1 + d * state.3, state.2, state.3)
+        }
     }
 
     #[cfg(test)]
@@ -1227,7 +1273,26 @@ F11";
                 .lines()
                 .map(|l| l.parse::<Command>().unwrap())
                 .collect();
-            assert_eq!(distance(commands), 25);
+            assert_eq!(distance(&commands), 25);
+        }
+
+        #[test]
+        fn example2() {
+            let commands: Vec<Command> = INPUT1
+                .lines()
+                .map(|l| l.parse::<Command>().unwrap())
+                .collect();
+            assert_eq!(distance2(&commands), 286);
+        }
+
+        #[test]
+        fn rotate() {
+            assert_eq!(rotate_right(90,  &mut (0,0,1,1)), (0,0,1,-1));
+            assert_eq!(rotate_right(180, &mut (0,0,1,1)), (0,0,-1,-1));
+            assert_eq!(rotate_right(270, &mut (0,0,1,1)), (0,0,-1,1));
+            assert_eq!(rotate_left(90,   &mut (0,0,1,1)), (0,0,-1,1));
+            assert_eq!(rotate_left(180,  &mut (0,0,1,1)), (0,0,-1,-1));
+            assert_eq!(rotate_left(270,  &mut (0,0,1,1)), (0,0,1,-1));
         }
     }
 }
