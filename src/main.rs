@@ -895,30 +895,70 @@ mod day11 {
             adjacents
         }
 
-        fn update_seat(self: &Self, r: usize, c: usize) -> SeatStatus {
+        fn seats_in_los(self: &Self, r: usize, c: usize) -> Vec<SeatStatus> {
+            let mut dirs: Vec<(isize, isize)> = vec![];
+            for i in -1..=1 {
+                for j in -1..=1 {
+                    if i == 0 && j == 0 { continue; }
+                    dirs.push( (i,j) );
+                }
+            }
+
+            let mut seats: Vec<SeatStatus> = Vec::new();
+            'dir: for dir in dirs {
+                let mut pos = (r as isize, c as isize);
+                loop {
+                    if let Some(new_r) = pos.0.checked_add(dir.0) {
+                        if let Some(new_c) = pos.1.checked_add(dir.1) {
+                            if let Some(status) = self.get(new_r as usize, new_c as usize) {
+                                if status != SeatStatus::Floor {
+                                    seats.push(status);
+                                    continue 'dir;
+                                } else {
+                                    pos = (new_r, new_c);
+                                    continue;
+                                }
+                            } else {
+                                continue 'dir;
+                            }
+                        } else {
+                            continue 'dir;
+                        }
+                    } else {
+                        continue 'dir;
+                    }
+                }
+            }
+            seats
+        }
+
+        fn update_seat(self: &Self, r: usize, c: usize, adj: bool) -> SeatStatus {
             let cur = self.get(r, c).unwrap();
 
             if cur == SeatStatus::Floor {
                 return SeatStatus::Floor;
             }
 
-            let adj_count = self.adjacents(r, c).iter()
-                .filter(|x| **x == SeatStatus::Occupied).count();
+            let adj_count = if adj { self.adjacents(r, c) } else { self.seats_in_los(r, c) }
+                .iter().filter(|x| **x == SeatStatus::Occupied).count();
+
+            let adj_count_too_high = adj_count >= if adj { 4 } else { 5 };
 
             if cur == SeatStatus::Empty && adj_count == 0 {
                 return SeatStatus::Occupied;
-            } else if cur == SeatStatus::Occupied && adj_count >= 4 {
+            } else if cur == SeatStatus::Occupied && adj_count_too_high {
                 return SeatStatus::Empty;
             } else {
                 return cur;
             }
         }
 
-        fn update_map(self: &Self) -> Self {
+        fn update_map(self: &Self, adj: bool) -> Self {
             let mut new = self.clone();
             for r in 0..self.height {
                 for c in 0..self.width {
-                    new.update(r, c, self.update_seat(r, c));
+                    let new_status = self.update_seat(r, c, adj);
+                    new.update(r, c, new_status);
                 }
             }
             new
@@ -936,13 +976,13 @@ mod day11 {
             count
         }
 
-        pub fn finally_occupied(self: &SeatMap) -> usize {
+        pub fn finally_occupied(self: &SeatMap, adj: bool) -> usize {
             let mut curr = self.clone();
-            let mut next = self.update_map();
+            let mut next = self.update_map(adj);
 
             while next != curr {
                 curr = next;
-                next = curr.update_map();
+                next = curr.update_map(adj);
             }
 
             next.occupied()
@@ -983,9 +1023,9 @@ mod day11 {
     pub fn day11() {
         let input = include_str!("11.input");
         let map = input.parse::<SeatMap>().unwrap();
-        println!("{} seats were finally occupied", map.finally_occupied());
+        println!("Using adjacency, {} seats were finally occupied", map.finally_occupied(true));
+        println!("Using visibility, {} seats were finally occupied", map.finally_occupied(false));
     }
-
 
     #[cfg(test)]
     mod tests {
@@ -1013,6 +1053,14 @@ L.LLLLL.LL";
 #.######.#
 #.#####.##";
 
+        const INPUT3: &str = r".##.##.
+#.#.#.#
+##...##
+...L...
+##...##
+#.#.#.#
+.##.##.";
+
         #[test]
         fn parse() {
             let map = INPUT1.parse::<SeatMap>().unwrap();
@@ -1024,21 +1072,33 @@ L.LLLLL.LL";
         #[test]
         fn update_seat() {
             let map1 = INPUT1.parse::<SeatMap>().unwrap();
-            assert_eq!(map1.update_seat(0, 0), SeatStatus::Occupied);
+            assert_eq!(map1.update_seat(0, 0, true), SeatStatus::Occupied);
         }
 
         #[test]
         fn update_seat2() {
             let map2 = INPUT2.parse::<SeatMap>().unwrap();
             println!("{}", &map2);
-            assert_eq!(map2.update_seat(1, 2), SeatStatus::Empty);
+            assert_eq!(map2.update_seat(1, 2, true), SeatStatus::Empty);
         }
 
         #[test]
         fn finally_occupied() {
             let map = INPUT1.parse::<SeatMap>().unwrap();
-            assert_eq!(map.finally_occupied(), 37);
+            assert_eq!(map.finally_occupied(true), 37);
         }
 
+		#[test]
+		fn none_visible() {
+			let map = INPUT3.parse::<SeatMap>().unwrap();
+			assert!(map.seats_in_los(3, 3).is_empty());
+		}
+
+		#[test]
+		fn finally_occupied_visible() {
+			let map = INPUT1.parse::<SeatMap>().unwrap();
+            assert_eq!(map.finally_occupied(false), 26);
+		}
     }
 }
+
