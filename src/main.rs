@@ -28,6 +28,7 @@ fn main() {
         "8" => day8::day8(),
         "9" => day9::day9(),
         "10" => day10::day10(),
+        "11" => day11::day11(),
         _ => println!("Invalid day specified"),
     }
 }
@@ -806,5 +807,238 @@ mod day10 {
 
         adapters.sort();
         assert_eq!(joltage_combo_count(&mut adapters), 19208);
+    }
+}
+
+mod day11 {
+    use std::{cmp::min, fmt, str::FromStr};
+
+    #[derive(Clone, Debug, Copy, PartialEq)]
+    enum SeatStatus {
+        Empty,
+        Occupied,
+        Floor,
+    }
+
+    impl fmt::Display for SeatStatus {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                SeatStatus::Floor => write!(f, "."),
+                SeatStatus::Occupied => write!(f, "#"),
+                SeatStatus::Empty => write!(f, "L"),
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SeatMap {
+        width: usize,
+        height: usize,
+        map: Vec<Vec<SeatStatus>>,
+    }
+
+    impl FromStr for SeatStatus {
+        type Err = ParseError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            match s {
+                "L" => Ok(SeatStatus::Empty),
+                "." => Ok(SeatStatus::Floor),
+                "#" => Ok(SeatStatus::Occupied),
+                _ => Err(ParseError),
+            }
+        }
+    }
+
+    // indices are height (rows), width (cols)
+    impl SeatMap {
+        fn new(width: usize, height: usize) -> Self {
+            let mut row = Vec::with_capacity(width);
+            for _ in 0..width {
+                row.push(SeatStatus::Empty)
+            }
+            let mut map = Vec::with_capacity(height);
+            for _ in 0..height {
+                map.push(row.clone());
+            }
+            Self {
+                width: width,
+                height: height,
+                map: map,
+            }
+        }
+
+        fn update(self: &mut Self, r: usize, c: usize, status: SeatStatus) {
+            *(self.map.get_mut(r).unwrap().get_mut(c).unwrap()) = status;
+        }
+
+        fn get(self: &Self, r: usize, c: usize) -> Option<SeatStatus> {
+            if r < self.height && c < self.width {
+                Some(self.map[r][c])
+            } else {
+                None
+            }
+        }
+
+        fn adjacents(self: &Self, r: usize, c: usize) -> Vec<SeatStatus> {
+            let rlb = if r == 0 { 0 } else { r - 1 };
+            let clb = if c == 0 { 0 } else { c - 1 };
+            let rub = min(r + 1, self.height - 1);
+            let cub = min(c + 1, self.width - 1);
+
+            let mut adjacents: Vec<SeatStatus> = Vec::new();
+            for ri in rlb..=rub {
+                for ci in clb..=cub {
+                    if ri == r && ci == c { continue; }
+                    adjacents.push(self.get(ri, ci).unwrap());
+                }
+            }
+            adjacents
+        }
+
+        fn update_seat(self: &Self, r: usize, c: usize) -> SeatStatus {
+            let cur = self.get(r, c).unwrap();
+
+            if cur == SeatStatus::Floor {
+                return SeatStatus::Floor;
+            }
+
+            let adj_count = self.adjacents(r, c).iter()
+                .filter(|x| **x == SeatStatus::Occupied).count();
+
+            if cur == SeatStatus::Empty && adj_count == 0 {
+                return SeatStatus::Occupied;
+            } else if cur == SeatStatus::Occupied && adj_count >= 4 {
+                return SeatStatus::Empty;
+            } else {
+                return cur;
+            }
+        }
+
+        fn update_map(self: &Self) -> Self {
+            let mut new = self.clone();
+            for r in 0..self.height {
+                for c in 0..self.width {
+                    new.update(r, c, self.update_seat(r, c));
+                }
+            }
+            new
+        }
+
+        pub fn occupied(self: &Self) -> usize {
+            let mut count = 0;
+            for row in &self.map {
+                for val in row {
+                    if *val == SeatStatus::Occupied {
+                        count += 1;
+                    }
+                }
+            }
+            count
+        }
+
+        pub fn finally_occupied(self: &SeatMap) -> usize {
+            let mut curr = self.clone();
+            let mut next = self.update_map();
+
+            while next != curr {
+                curr = next;
+                next = curr.update_map();
+            }
+
+            next.occupied()
+        }
+    }
+
+    #[derive(Debug)]
+    struct ParseError;
+    impl FromStr for SeatMap {
+        type Err = ParseError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let lines = s.lines().collect::<Vec<&str>>();
+            let width = lines[0].len();
+            let height = lines.len();
+            let mut map = SeatMap::new(width, height);
+            for (i, line) in lines.iter().enumerate() {
+                for j in 0..line.len() {
+                    let c: &str = line.get(j..j + 1).unwrap();
+                    map.update(i, j, c.parse::<SeatStatus>().unwrap());
+                }
+            }
+            Ok(map)
+        }
+    }
+
+    impl fmt::Display for SeatMap {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            for i in 0..self.height {
+                for j in 0..self.width {
+                    write!(f, "{}", self.get(i, j).unwrap())?;
+                }
+                write!(f, "\n")?;
+            }
+            write!(f, "\n")
+        }
+    }
+
+    pub fn day11() {
+        let input = include_str!("11.input");
+        let map = input.parse::<SeatMap>().unwrap();
+        println!("{} seats were finally occupied", map.finally_occupied());
+    }
+
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        const INPUT1: &str = r"L.LL.LL.LL
+LLLLLLL.LL
+L.L.L..L..
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
+..L.L.....
+LLLLLLLLLL
+L.LLLLLL.L
+L.LLLLL.LL";
+
+        const INPUT2: &str = r"#.##.##.##
+#######.##
+#.#.#..#..
+####.##.##
+#.##.##.##
+#.#####.##
+..#.#.....
+##########
+#.######.#
+#.#####.##";
+
+        #[test]
+        fn parse() {
+            let map = INPUT1.parse::<SeatMap>().unwrap();
+            assert_eq!(map.width, 10);
+            assert_eq!(map.height, 10);
+            assert_eq!(map.occupied(), 0);
+        }
+
+        #[test]
+        fn update_seat() {
+            let map1 = INPUT1.parse::<SeatMap>().unwrap();
+            assert_eq!(map1.update_seat(0, 0), SeatStatus::Occupied);
+        }
+
+        #[test]
+        fn update_seat2() {
+            let map2 = INPUT2.parse::<SeatMap>().unwrap();
+            println!("{}", &map2);
+            assert_eq!(map2.update_seat(1, 2), SeatStatus::Empty);
+        }
+
+        #[test]
+        fn finally_occupied() {
+            let map = INPUT1.parse::<SeatMap>().unwrap();
+            assert_eq!(map.finally_occupied(), 37);
+        }
+
     }
 }
