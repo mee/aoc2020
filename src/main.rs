@@ -664,7 +664,10 @@ mod day9 {
             if !is_valid(i, &nums) {
                 println!("Found {} which is not valid", &nums[i]);
                 let (min, max) = creep_for_sum(nums[i], &nums);
-                println!("Sum of smallest and largest in running sum to invalid number: {}", min + max);
+                println!(
+                    "Sum of smallest and largest in running sum to invalid number: {}",
+                    min + max
+                );
             }
         }
     }
@@ -673,18 +676,31 @@ mod day9 {
 // day 10
 mod day10 {
     pub fn day10() {
-        let mut adapters = include_str!("10.input").lines()
-        .map(|l| l.parse::<usize>().unwrap()).collect::<Vec<usize>>();
-        adapters.sort();
-        if let Some(stats) = joltage_summary_stat(0, &mut adapters) {
-            println!("The product of one-jumps and three-jumps is {}", stats.0*stats.1);
+        let adapters = include_str!("10.input")
+            .lines()
+            .map(|l| l.parse::<usize>().unwrap())
+            .collect::<Vec<usize>>();
+        if let Some(stats) = joltage_summary_stat(0, &mut adapters.clone()) {
+            println!(
+                "The product of one-jumps and three-jumps is {}",
+                stats.0 * stats.1
+            );
         } else {
             println!("No valid combinations of adapters found");
         }
+
+        println!(
+            "There are {} possible ways to adapt",
+            joltage_combo_count(&mut adapters.clone())
+        );
     }
 
-    // requires `adapters` be sorted - Vec::is_sorted() experimental in stable...
-    pub fn joltage_summary_stat(output: usize, adapters: &mut Vec<usize>) -> Option<(usize, usize)> {
+    // requires `adapters` be sorted - Vec::is_sorted() eXperimental in stable...
+    pub fn joltage_summary_stat(
+        output: usize,
+        adapters: &mut Vec<usize>,
+    ) -> Option<(usize, usize)> {
+        adapters.sort();
         if adapters.len() == 1 {
             if output > adapters[0] {
                 return None;
@@ -694,7 +710,7 @@ mod day10 {
                     2 => Some((0, 1)),
                     3 => Some((0, 2)),
                     _ => None,
-                }
+                };
             }
         }
 
@@ -704,7 +720,7 @@ mod day10 {
         while adapters[i] <= output + 3 {
             let value = adapters.remove(i);
             match joltage_summary_stat(value, adapters) {
-                Some((o,t)) => {
+                Some((o, t)) => {
                     if value - output == 1 {
                         return Some((o + 1, t));
                     } else if value - output == 3 {
@@ -712,7 +728,7 @@ mod day10 {
                     } else {
                         return Some((o, t));
                     }
-                },
+                }
                 None => {
                     adapters.insert(i, value);
                     if i < adapters.len() - 1 {
@@ -727,20 +743,68 @@ mod day10 {
         None
     }
 
+    pub fn joltage_combo_count(adapters: &mut Vec<usize>) -> usize {
+        adapters.sort();
+        adapters.insert(0, 0);
+        let mut counts: Vec<usize> = Vec::with_capacity(adapters.len());
+        for _ in 0..adapters.len() {
+            counts.push(0);
+        }
+        counts[0] = 1; // start with one path to zero
+
+        let mut i = 1;
+        while i < adapters.len() {
+            /* counts[i] is the sum of the counts of the k previous, accessible counts,
+            sum(counts[i-k..i-1]) */
+            let mut j = i - 1;
+            loop {
+                if adapters[i] - adapters[j] > 3 {
+                    break;
+                }
+                counts[i] += counts[j];
+                if j == 0 {
+                    break;
+                }
+                j -= 1;
+            }
+            i += 1;
+        }
+        counts[counts.len() - 1]
+    }
+
     #[test]
-    fn test1() {
+    fn test1a() {
         let mut adapters = vec![16, 10, 15, 5, 1, 11, 7, 19, 6, 12, 4];
         adapters.sort();
-        assert_eq!(joltage_summary_stat(0, &mut adapters), Some((7,5)));
+        assert_eq!(joltage_summary_stat(0, &mut adapters), Some((7, 5)));
     }
 
     #[test]
-    fn test2() {
-        let mut adapters = vec![28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 
-        45, 19, 38, 39, 11, 1, 32, 25, 35, 8, 17, 7, 9, 4, 2, 34, 10, 3];
-
+    fn test2a() {
+        let mut adapters = vec![16, 10, 15, 5, 1, 11, 7, 19, 6, 12, 4];
         adapters.sort();
-        assert_eq!(joltage_summary_stat(0, &mut adapters), Some((22,10)));
+        assert_eq!(joltage_combo_count(&mut adapters), 8);
     }
 
+    #[test]
+    fn test1b() {
+        let mut adapters = vec![
+            28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 45, 19, 38, 39, 11, 1, 32, 25, 35,
+            8, 17, 7, 9, 4, 2, 34, 10, 3,
+        ];
+
+        adapters.sort();
+        assert_eq!(joltage_summary_stat(0, &mut adapters), Some((22, 10)));
+    }
+
+    #[test]
+    fn test2b() {
+        let mut adapters = vec![
+            28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 45, 19, 38, 39, 11, 1, 32, 25, 35,
+            8, 17, 7, 9, 4, 2, 34, 10, 3,
+        ];
+
+        adapters.sort();
+        assert_eq!(joltage_combo_count(&mut adapters), 19208);
+    }
 }
