@@ -30,6 +30,7 @@ fn main() {
         "10" => day10::day10(),
         "11" => day11::day11(),
         "12" => day12::day12(),
+        "13" => day13::day13(),
         _ => println!("Invalid day specified"),
     }
 }
@@ -1129,7 +1130,10 @@ mod day12 {
             .collect();
 
         println!("The Manhattan distance is {}", distance(&commands));
-        println!("The manhattan distance is {} (waypoint method)", distance2(&commands));
+        println!(
+            "The manhattan distance is {} (waypoint method)",
+            distance2(&commands)
+        );
     }
 
     #[derive(Debug, PartialEq)]
@@ -1218,14 +1222,14 @@ mod day12 {
      */
 
     fn rotate_left(d: isize, state: &mut WaypointState) -> WaypointState {
-        for _ in 0..(d/90).abs() {
+        for _ in 0..(d / 90).abs() {
             *state = (state.0, state.1, -state.3, state.2);
         }
         *state
     }
 
     fn rotate_right(d: isize, state: &mut WaypointState) -> WaypointState {
-        for _ in 0..(d/90).abs() {
+        for _ in 0..(d / 90).abs() {
             *state = (state.0, state.1, state.3, -state.2);
         }
         *state
@@ -1240,7 +1244,12 @@ mod day12 {
             Command::W(d) => (state.0, state.1, state.2 - d, state.3),
             Command::L(d) => rotate_left(*d, &mut state.clone()),
             Command::R(d) => rotate_right(*d, &mut state.clone()),
-            Command::F(d) => (state.0 + d * state.2, state.1 + d * state.3, state.2, state.3)
+            Command::F(d) => (
+                state.0 + d * state.2,
+                state.1 + d * state.3,
+                state.2,
+                state.3,
+            ),
         }
     }
 
@@ -1287,12 +1296,61 @@ F11";
 
         #[test]
         fn rotate() {
-            assert_eq!(rotate_right(90,  &mut (0,0,1,1)), (0,0,1,-1));
-            assert_eq!(rotate_right(180, &mut (0,0,1,1)), (0,0,-1,-1));
-            assert_eq!(rotate_right(270, &mut (0,0,1,1)), (0,0,-1,1));
-            assert_eq!(rotate_left(90,   &mut (0,0,1,1)), (0,0,-1,1));
-            assert_eq!(rotate_left(180,  &mut (0,0,1,1)), (0,0,-1,-1));
-            assert_eq!(rotate_left(270,  &mut (0,0,1,1)), (0,0,1,-1));
+            assert_eq!(rotate_right(90, &mut (0, 0, 1, 1)), (0, 0, 1, -1));
+            assert_eq!(rotate_right(180, &mut (0, 0, 1, 1)), (0, 0, -1, -1));
+            assert_eq!(rotate_right(270, &mut (0, 0, 1, 1)), (0, 0, -1, 1));
+            assert_eq!(rotate_left(90, &mut (0, 0, 1, 1)), (0, 0, -1, 1));
+            assert_eq!(rotate_left(180, &mut (0, 0, 1, 1)), (0, 0, -1, -1));
+            assert_eq!(rotate_left(270, &mut (0, 0, 1, 1)), (0, 0, 1, -1));
+        }
+    }
+}
+
+mod day13 {
+    pub fn day13() {
+        let notes = parse(include_str!("13.input"));
+        let (bus, earliest) = find_earliest(notes.0, notes.1);
+
+        println!(
+            "product of bus number and wait time is {}",
+            bus * (earliest - notes.0)
+        );
+    }
+
+    fn parse(s: &str) -> (usize, Vec<usize>) {
+        let lines = s.lines().collect::<Vec<&str>>();
+        let lb = lines[0].parse::<usize>().unwrap();
+        let buses = lines[1]
+            .split(',')
+            .filter(|s| *s != "x")
+            .map(|b| b.parse::<usize>().unwrap())
+            .collect();
+        (lb, buses)
+    }
+
+    fn find_earliest(lb: usize, buses: Vec<usize>) -> (usize, usize) {
+        buses
+            .iter()
+            .map(|t| (*t, ((lb / t) + 1) * t))
+            .fold((0, usize::MAX), |a, b| if a.1 < b.1 { a } else { b })
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        const INPUT1: &str = "939
+7,13,x,x,59,x,31,19";
+
+        #[test]
+        fn test_parse() {
+            assert_eq!(parse(INPUT1), (939, vec![7, 13, 59, 31, 19]));
+        }
+
+        #[test]
+        fn example() {
+            let notes = parse(INPUT1);
+            assert_eq!(find_earliest(notes.0, notes.1), (59, 944));
         }
     }
 }
