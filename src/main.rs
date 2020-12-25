@@ -1307,6 +1307,8 @@ F11";
 }
 
 mod day13 {
+    use num::Integer;
+
     pub fn day13() {
         let notes = parse(include_str!("13.input"));
         let (bus, earliest) = find_earliest(notes.0, notes.1.clone());
@@ -1343,6 +1345,7 @@ mod day13 {
 
     fn find_sequential(buses: Vec<usize>, start: usize) -> usize {
         let mut i = ((start / buses[0]) + 1) * buses[0];
+        let mut jump = buses[0];
         'chance: loop {
             for j in 1..buses.len() {
                 if buses[j] == 0 {
@@ -1350,9 +1353,10 @@ mod day13 {
                     continue;
                 }
                 if (i + j) % buses[j] != 0 {
-                    i += buses[0];
+                    i += jump;
                     continue 'chance;
                 }
+                jump = jump.lcm(&buses[j]);
                 print_bus(buses[j], j, i);
             }
             return i;
