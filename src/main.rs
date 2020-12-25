@@ -1309,11 +1309,16 @@ F11";
 mod day13 {
     pub fn day13() {
         let notes = parse(include_str!("13.input"));
-        let (bus, earliest) = find_earliest(notes.0, notes.1);
+        let (bus, earliest) = find_earliest(notes.0, notes.1.clone());
 
         println!(
             "product of bus number and wait time is {}",
             bus * (earliest - notes.0)
+        );
+
+        println!(
+            "sequential bus arrivals first happen at {}",
+            find_sequential(notes.1, 10000000000000) 
         );
     }
 
@@ -1322,7 +1327,7 @@ mod day13 {
         let lb = lines[0].parse::<usize>().unwrap();
         let buses = lines[1]
             .split(',')
-            .filter(|s| *s != "x")
+            .map(|s| if s == "x" { "0" } else { s })
             .map(|b| b.parse::<usize>().unwrap())
             .collect();
         (lb, buses)
@@ -1331,8 +1336,39 @@ mod day13 {
     fn find_earliest(lb: usize, buses: Vec<usize>) -> (usize, usize) {
         buses
             .iter()
+            .filter(|x| **x > 0)
             .map(|t| (*t, ((lb / t) + 1) * t))
             .fold((0, usize::MAX), |a, b| if a.1 < b.1 { a } else { b })
+    }
+
+    fn find_sequential(buses: Vec<usize>, start: usize) -> usize {
+        let mut i = ((start / buses[0]) + 1) * buses[0];
+        'chance: loop {
+            for j in 1..buses.len() {
+                if buses[j] == 0 {
+                    print_bus(buses[j], j, i);
+                    continue;
+                }
+                if (i + j) % buses[j] != 0 {
+                    i += buses[0];
+                    continue 'chance;
+                }
+                print_bus(buses[j], j, i);
+            }
+            return i;
+        }
+    }
+
+    fn print_bus(bus: usize, offset: usize, start: usize) {
+        let bus_char = if bus == 0 { "-" } else { "D" };
+        if offset == 1 {
+            println!("{}\tD", start);
+        }
+        print!("{}\t", start + offset);
+        for _ in 0..offset {
+            print!(" ");
+        }
+        println!("{}", bus_char);
     }
 
     #[cfg(test)]
@@ -1342,15 +1378,66 @@ mod day13 {
         const INPUT1: &str = "939
 7,13,x,x,59,x,31,19";
 
+        const INPUT2: &str = "3417
+17,x,13,19";
+
+        const INPUT3: &str = "754018
+67,7,59,61";     
+
+        const INPUT4: &str = "779210
+67,x,7,59,61";
+
+        const INPUT5: &str = "1261476
+67,7,x,59,61";
+
+        const INPUT6: &str = "1202161486
+1789,37,47,1889";
+
         #[test]
         fn test_parse() {
-            assert_eq!(parse(INPUT1), (939, vec![7, 13, 59, 31, 19]));
+            assert_eq!(parse(INPUT1), (939, vec![7, 13, 0, 0, 59, 0, 31, 19]));
         }
 
         #[test]
         fn example() {
             let notes = parse(INPUT1);
             assert_eq!(find_earliest(notes.0, notes.1), (59, 944));
+        }
+
+        #[test]
+        fn example_sequential1() {
+            let notes = parse(INPUT1);
+            assert_eq!(find_sequential(notes.1, 0), 1068781);
+        }
+
+        #[test]
+        fn example_sequential2() {
+            let notes = parse(INPUT2);
+            assert_eq!(find_sequential(notes.1, 0), notes.0);
+        }
+
+        #[test]
+        fn example_sequential3() {
+            let notes = parse(INPUT3);
+            assert_eq!(find_sequential(notes.1, 0), notes.0);
+        }
+
+        #[test]
+        fn example_sequential4() {
+            let notes = parse(INPUT4);
+            assert_eq!(find_sequential(notes.1, 0), notes.0);
+        }
+
+        #[test]
+        fn example_sequential5() {
+            let notes = parse(INPUT5);
+            assert_eq!(find_sequential(notes.1, 0), notes.0);
+        }
+
+        #[test]
+        fn example_sequential6() {
+            let notes = parse(INPUT6);
+            assert_eq!(find_sequential(notes.1, 0), notes.0);
         }
     }
 }
