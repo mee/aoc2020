@@ -31,6 +31,7 @@ fn main() {
         "11" => day11::day11(),
         "12" => day12::day12(),
         "13" => day13::day13(),
+        "14" => day14::day14(),
         _ => println!("Invalid day specified"),
     }
 }
@@ -1442,6 +1443,82 @@ mod day13 {
         fn example_sequential6() {
             let notes = parse(INPUT6);
             assert_eq!(find_sequential(notes.1, 0), notes.0);
+        }
+    }
+}
+
+mod day14 {
+    use std::collections::HashMap;
+
+    /*
+     * OK, let's represent this "mask" as two masks: the zeros (z) and the ones (o)
+     * a mask of xx1x0 would be decomposed into
+     *         z 11110    <-- 0 if mask is 0 at that position, otherwise 1
+     *         o 00100    <-- 1 if mask is 1 at that position, otherwise 0
+     *
+     * That way, I can modify value k 01101 by doing x = (x & z) | o
+     *    x 01101
+     *    z 11110 (&)
+     *      01100
+     *    o 00100 (|)
+     *      01100
+     */
+    pub fn day14() {
+        let input = include_str!("14.input");
+        println!("final sum: {}", execute(&input));
+    }
+
+    fn parse_mask(mask: &str) -> (u64, u64) {
+        let mut z = u64::MAX;
+        let mut o = 0 as u64;
+        let offset = mask.len() - 1;
+        for (i, c) in mask.chars().enumerate() {
+            if c == '1' {
+                o |= 1 << (offset - i); // set o at pos i to 1
+            } else if c == '0' {
+                z &= u64::MAX - (1 << (offset - i)); // set z at pos i to 0
+            }
+        }
+        (z, o)
+    }
+
+    fn apply_mask(val: u64, mask: (u64, u64)) -> u64 {
+        val & mask.0 | mask.1
+    }
+
+    fn execute(s: &str) -> u64 {
+        let mut mask: (u64, u64) = (0, 0);
+        let mut mem: HashMap<u64, u64> = HashMap::new();
+        for line in s.lines() {
+            match &line[..=2] {
+                "mas" => {
+                    mask = parse_mask(&line[7..].trim());
+                },
+                "mem" => {
+                    let lbindex = line.find(']').unwrap();
+                    let loc = line[4..lbindex].parse::<u64>().unwrap();
+                    let val = line[lbindex+4..].parse::<u64>().unwrap();
+                    mem.insert(loc, apply_mask(val, mask));
+                },
+                s => panic!("ahhh! {}", s),
+            }
+        }
+        mem.iter().fold((0 as u64, 0 as u64), |(_,v1), (_,v2)| (0, v1+v2)).1
+    }
+
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        const INPUT1: &str = "mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
+mem[8] = 11
+mem[7] = 101
+mem[8] = 0";
+
+        #[test]
+        fn test_execute() {
+            let val = execute(&INPUT1);
+            assert_eq!(val, 165);
         }
     }
 }
