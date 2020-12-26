@@ -1456,12 +1456,12 @@ mod day14 {
      *         z 11110    <-- 0 if mask is 0 at that position, otherwise 1
      *         o 00100    <-- 1 if mask is 1 at that position, otherwise 0
      *
-     * That way, I can modify value k 01101 by doing x = (x & z) | o
+     * That way, I can modify value 01101 by doing x' = (x & z) | o
      *    x 01101
      *    z 11110 (&)
      *      01100
      *    o 00100 (|)
-     *      01100
+     *   x' 01100
      */
     pub fn day14() {
         let input = include_str!("14.input");
