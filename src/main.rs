@@ -533,10 +533,7 @@ mod day8 {
 
     impl Command {
         fn new(index: usize, op: Operation) -> Command {
-            Command {
-                index: index,
-                op: op,
-            }
+            Command { index, op }
         }
     }
     struct ExecutionError;
@@ -863,11 +860,7 @@ mod day11 {
             for _ in 0..height {
                 map.push(row.clone());
             }
-            Self {
-                width: width,
-                height: height,
-                map: map,
-            }
+            Self { width, height, map }
         }
 
         fn update(self: &mut Self, r: usize, c: usize, status: SeatStatus) {
