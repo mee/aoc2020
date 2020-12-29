@@ -1441,7 +1441,6 @@ mod day13 {
 }
 
 mod day14 {
-    use num_traits::pow;
     use std::collections::HashMap;
 
     /*
@@ -1499,7 +1498,7 @@ mod day14 {
             }
         }
 
-        mem.values().fold(0, |a, b| a + b)
+        mem.values().sum()
     }
 
     fn expand_addr(m: &str) -> Vec<String> {
