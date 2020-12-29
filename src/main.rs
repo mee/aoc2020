@@ -1314,7 +1314,7 @@ mod day13 {
 
         println!(
             "sequential bus arrivals first happen at {}",
-            find_sequential(notes.1, 10000000000000) 
+            find_sequential(notes.1, 10000000000000)
         );
     }
 
@@ -1380,7 +1380,7 @@ mod day13 {
 17,x,13,19";
 
         const INPUT3: &str = "754018
-67,7,59,61";     
+67,7,59,61";
 
         const INPUT4: &str = "779210
 67,x,7,59,61";
@@ -1441,6 +1441,7 @@ mod day13 {
 }
 
 mod day14 {
+    use num_traits::pow;
     use std::collections::HashMap;
 
     /*
@@ -1459,6 +1460,7 @@ mod day14 {
     pub fn day14() {
         let input = include_str!("14.input");
         println!("final sum: {}", execute(&input));
+        println!("final sum (part 2): {}", execute2(&input));
     }
 
     fn parse_mask(mask: &str) -> (u64, u64) {
@@ -1475,8 +1477,111 @@ mod day14 {
         (z, o)
     }
 
-    fn apply_mask(val: u64, mask: (u64, u64)) -> u64 {
-        val & mask.0 | mask.1
+    // bad code wee woo wee woo wee woo
+    fn execute2(s: &str) -> u64 {
+        let mut mask: &str = "0";
+        let mut stack: Vec<(String, u64)> = Vec::new();
+        for line in s.lines() {
+            match &line[..=2] {
+                "mas" => {
+                    mask = line[7..].trim();
+                }
+                "mem" => {
+                    let lbindex = line.find(']').unwrap();
+                    let loc = &line[4..lbindex];
+                    let val = line[lbindex + 4..].parse::<u64>().unwrap();
+                    stack.push((apply_mask(loc, &mask), val));
+                }
+                s => panic!("ahhh! {}", s),
+            }
+        }
+
+        // addresses that have been overwritten
+        let (mut over, mut sum) = stack.pop().unwrap();
+        print!("Contribution of writing {:>12} to {:>36} is ", sum, over);
+        sum *= pow(2, over.chars().filter(|c| *c == 'X').count());
+        println!("{}", sum);
+
+        while let Some((addr, val)) = stack.pop() {
+            if over == format!("{:X>36}", "") {
+                println!("All addresses have been written to, we're done.");
+                break;
+            }
+            let pwt = over.chars().zip(addr.chars()).map(|(o, a)| match (o, a) {
+                ('X', a) => match a {
+                    '1' => '0',
+                    '0' => '1',
+                    x => x,
+                },
+                _ => o,
+            });
+
+            // if we are completely overwritten, bail
+            let dof = pwt.clone().filter(|c| *c == 'X').count();
+            if dof == 0 {
+                println!(
+                    "Writes of {:>12} to {:>36} were all overwritten; Skipping!",
+                    val, addr
+                );
+                continue;
+            }
+            let addition = val * pow(2, dof);
+            println!(
+                "Contribution of writing {:>12} to {:>36} is {:>16}",
+                val,
+                pwt.collect::<String>(),
+                addition
+            );
+            sum += addition;
+
+            // update over
+            println!("Updating over from {}", &over);
+            println!("              with {}", &addr);
+            over = over
+                .chars()
+                .zip(addr.chars())
+                .map(|(o, a)| if o != a { 'X' } else { o })
+                .collect();
+            println!("                to {}", &over);
+        }
+        sum
+    }
+
+    // bad code bad code wee ooo wee ooo wee ooo
+    fn apply_mask<'a>(l: &'a str, m: &'a str) -> String {
+        println!("Applying mask {} to {}", m, l);
+        // convert l to u36 binary representation
+        let mut ll = String::new();
+        let mut lo = l.parse::<usize>().unwrap();
+        while lo > 0 {
+            ll.insert(
+                0,
+                match lo % 2 {
+                    0 => '0',
+                    1 => '1',
+                    _ => panic!("bad input {}", l),
+                },
+            );
+            lo /= 2;
+        }
+        ll = format!("{:0>36}", ll);
+        println!("Converted {} to {}", l, ll);
+
+        let ret = ll
+            .chars()
+            .zip(m.chars())
+            .map(|(lc, mc)| match (lc, mc) {
+                (x, '0') => x,
+                (_, '1') => '1',
+                (_, 'X') => 'X',
+                _ => panic!("bad mask bit {} or loc bit {}", mc, lc),
+            })
+            .collect::<String>();
+        println!(
+            "Applying mask {}\n           to {}\n              {}",
+            m, ll, &ret
+        );
+        ret
     }
 
     fn execute(s: &str) -> u64 {
@@ -1486,17 +1591,17 @@ mod day14 {
             match &line[..=2] {
                 "mas" => {
                     mask = parse_mask(&line[7..].trim());
-                },
+                }
                 "mem" => {
                     let lbindex = line.find(']').unwrap();
                     let loc = line[4..lbindex].parse::<u64>().unwrap();
-                    let val = line[lbindex+4..].parse::<u64>().unwrap();
-                    mem.insert(loc, apply_mask(val, mask));
-                },
+                    let val = line[lbindex + 4..].parse::<u64>().unwrap();
+                    mem.insert(loc, val & mask.0 | mask.1);
+                }
                 s => panic!("ahhh! {}", s),
             }
         }
-        mem.iter().fold((0 as u64, 0 as u64), |(_,v1), (_,v2)| (0, v1+v2)).1
+        mem.values().fold(0 as u64, |v1, v2| v1 + v2)
     }
 
     #[cfg(test)]
@@ -1508,10 +1613,27 @@ mem[8] = 11
 mem[7] = 101
 mem[8] = 0";
 
+        const INPUT2: &str = "mask = 000000000000000000000000000000X1001X
+mem[42] = 100
+mask = 00000000000000000000000000000000X0XX
+mem[26] = 1";
+
         #[test]
         fn test_execute() {
             let val = execute(&INPUT1);
             assert_eq!(val, 165);
         }
+
+        #[test]
+        fn test_execute2() {
+            println!("{}", &INPUT2);
+            let val = execute2(&INPUT2);
+            assert_eq!(val, 208);
+        }
+
+        // 71880126568 too low
+        // 81924346600 too low
+        // 3687341584520 too high
+        // 280831712504
     }
 }
