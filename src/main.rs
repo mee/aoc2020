@@ -1477,78 +1477,46 @@ mod day14 {
         (z, o)
     }
 
-    // bad code wee woo wee woo wee woo
-    fn execute2(s: &str) -> u64 {
-        let mut sum: u64 = 0;
-        let mut mask: &str = "bad mask";
-        // mask, value, contribution
-        let mut stack: Vec<(String, u64, usize)> = Vec::new();
+    // let's brute force!
+    fn execute2(s: &str) -> usize {
+        let mut mem: HashMap<String, usize> = HashMap::new();
+        let mut mask = "bad mask";
         for line in s.lines() {
             match &line[..=2] {
                 "mas" => {
-                    mask = line[7..].trim();
+                    mask = &line[7..];
                 }
                 "mem" => {
                     let lbindex = line.find(']').unwrap();
                     let loc = &line[4..lbindex];
-                    let val = line[lbindex + 4..].parse::<u64>().unwrap();
-                    let masked_addr = apply_mask(loc, &mask);
-                    let contribution = count_addr(&masked_addr);
-                    println!("contribution of {} is {}", val, contribution);
-                    stack.push((masked_addr, val, contribution));
+                    let val = line[lbindex + 4..].parse::<usize>().unwrap();
+                    let expanded_addrs = expand_addr(&apply_mask(loc, &mask));
+                    for addr in expanded_addrs {
+                        mem.insert(addr, val);
+                    }
                 }
                 s => panic!("ahhh! {}", s),
             }
         }
 
-        println!("STACK");
-        for i in 0..stack.len() {
-            let val = stack.get(i).unwrap();
-            println!("{}\t{:?} {:>12} {}", i, val.0, val.1, val.2);
+        mem.values().fold(0, |a, b| a + b)
+    }
+
+    fn expand_addr(m: &str) -> Vec<String> {
+        if m.contains('X') {
+            let b0 = m.clone().replacen("X", "0", 1);
+            let b1 = m.clone().replacen("X", "1", 1);
+            let mut ret0 = expand_addr(&b0);
+            let mut ret1 = expand_addr(&b1);
+            ret0.append(&mut ret1);
+            ret0
+        } else {
+            vec![String::from(m)]
         }
-        println!();
-
-        trim_contributions(&mut stack);
-
-        stack.iter().fold(0, |s, i| s + (i.1 * i.2 as u64))
-    }
-
-    fn trim_contributions(s: &mut Vec<(String, u64, usize)>) {
-        for i in 0..s.len() {
-            let curr = s.get(i).unwrap().clone();
-            let curr_mask = &curr.0;
-            let mut curr_cont = curr.2;
-            for j in i + 1..s.len() {
-                println!(
-                    "reducing contribution of cmd {} ({}) due to cmd {}",
-                    i, curr_cont, j
-                );
-                curr_cont -= dbg!(calc_overlap(curr_mask, &s.get(j).unwrap().0));
-            }
-            s.get_mut(i).unwrap().2 = curr_cont
-        }
-    }
-
-    fn calc_overlap(curr: &str, prev: &str) -> usize {
-        curr.chars()
-            .zip(prev.chars())
-            .map(|(cc, pc)| match (cc, pc) {
-                ('X', 'X') => 2,
-                ('1', '0') => 0,
-                ('0', '1') => 0,
-                _ => 1,
-            })
-            .fold(1, |a, b| a * b)
-    }
-
-    fn count_addr(m: &str) -> usize {
-        pow(2, m.chars().filter(|c| *c == 'X').count())
     }
 
     // bad code bad code wee ooo wee ooo wee ooo
     fn apply_mask<'a>(l: &'a str, m: &'a str) -> String {
-        // println!("Applying mask {} to {}", m, l);
-        // convert l to u36 binary representation
         let mut ll = String::new();
         let mut lo = l.parse::<usize>().unwrap();
         while lo > 0 {
@@ -1624,10 +1592,9 @@ mem[26] = 1";
             assert_eq!(val, 208);
         }
 
-        // 71880126568 too low
-        // 81924346600 too low
-        // 3687341584520 too high
-        // 12610847022 (not submitted), I know this is too low
-        // 3688599229552
+        #[test]
+        fn test_expand_addr() {
+            assert_eq!(expand_addr("X0X"), vec!["000", "001", "100", "101"]);
+        }
     }
 }
