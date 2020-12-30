@@ -4,6 +4,8 @@ use num_traits::pow;
 #[macro_use]
 extern crate lazy_static;
 
+mod days;
+
 fn main() {
     let matches = App::new("Advent of Code 2020")
         .version("1.0.0")
@@ -32,6 +34,7 @@ fn main() {
         "12" => day12::day12(),
         "13" => day13::day13(),
         "14" => day14::day14(),
+        "15" => days::day15::day15(),
         _ => println!("Invalid day specified"),
     }
 }
