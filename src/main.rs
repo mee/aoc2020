@@ -35,6 +35,7 @@ fn main() {
         "13" => day13::day13(),
         "14" => day14::day14(),
         "15" => days::day15::day15(),
+        "16" => days::day16::day16(),
         _ => println!("Invalid day specified"),
     }
 }
