@@ -1,12 +1,21 @@
 use std::collections::HashMap;
 
 pub fn day15() {
-    let turn_count = 2020;
-    let gen = GameNumGen::new(vec![20, 9, 11, 0, 1, 2]);
+    let turn_count1 = 2020;
+    let gen1 = GameNumGen::new(vec![20, 9, 11, 0, 1, 2]);
     println!(
         "On turn {} the number {} will be spoken",
-        turn_count,
-        gen.take(turn_count).last().unwrap()
+        turn_count1,
+        &gen1.take(turn_count1).last().unwrap()
+    );
+
+    let gen2 = GameNumGen::new(vec![20, 9, 11, 0, 1, 2]);
+    let turn_count2 = 30000000;
+
+    println!(
+        "On turn {} the number {} will be spoken",
+        turn_count1,
+        &gen2.take(turn_count2).last().unwrap()
     );
 }
 
