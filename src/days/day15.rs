@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 pub fn day15() {
-    let turns = 2020;
+    let turn_count = 2020;
     let gen = GameNumGen::new(vec![20, 9, 11, 0, 1, 2]);
     println!(
         "On turn {} the number {} will be spoken",
-        turns,
-        gen.take(2020).last().unwrap()
+        turn_count,
+        gen.take(turn_count).last().unwrap()
     );
 }
 
@@ -115,5 +115,12 @@ mod test {
         let gen = GameNumGen::new(starting_nums);
         let last = gen.take(2020).last().unwrap();
         assert_eq!(last, 1836);
+    }
+
+    #[test]
+    fn part1() {
+        let gen = GameNumGen::new(vec![20, 9, 11, 0, 1, 2]);
+        let last = gen.take(2020).last().unwrap();
+        assert_eq!(last, 1111);
     }
 }
