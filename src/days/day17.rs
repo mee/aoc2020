@@ -278,6 +278,7 @@ impl std::fmt::Display for Space {
 }
 
 #[cfg(test)]
+#[warn(unused_must_use)]
 mod test {
     use super::*;
     const INPUT1: &str = ".#.
