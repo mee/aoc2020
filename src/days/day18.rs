@@ -2,12 +2,21 @@ use std::error::Error;
 use std::str::FromStr;
 pub fn day18() {
     let mut sum = 0;
-    for line in include_str!("18.input").lines() {
+    let input = include_str!("18.input");
+    for line in input.lines() {
         let res = eval_str(line).unwrap();
         println!("{:>12} = {}", res, line);
         sum += res;
     }
     println!("The sum of all results is {}", sum);
+
+    sum = 0;
+    for line in input.lines() {
+        let res = eval_adv(line);
+        println!("{:>12} = {}", res, line);
+        sum += res;
+    }
+    println!("Using advanced math, the sum of all results is {}", sum);
 }
 
 #[derive(Debug, PartialEq)]
@@ -111,6 +120,80 @@ fn eval_str(s: &str) -> Result<isize, EvalError> {
     Ok(cur)
 }
 
+// not sure this will work, because expressions might be dropped w/o non-weak refs to them.
+// back-up idea: store non-weak refs to them in a hashset
+#[derive(Debug, PartialEq)]
+enum AdvExpr {
+    Value(isize),
+    Add,
+    Multiply,
+}
+
+fn get_next_expr_adv(s: &str) -> (AdvExpr, &str) {
+    if s.starts_with('(') {
+        let pi_rh = find_closing_paren(s, 0);
+        let expr = eval_adv_expr(&s[1..pi_rh]).unwrap();
+        return (expr, &s[pi_rh + 1..]);
+    } else if s.starts_with(char::is_numeric) {
+        if let Some(si) = s.find(|c: char| !c.is_numeric()) {
+            let val = s[0..si].parse::<isize>().unwrap();
+            return (AdvExpr::Value(val), &s[si..]);
+        } else {
+            let val = s[0..].parse::<isize>().unwrap();
+            return (AdvExpr::Value(val), "");
+        }
+    } else {
+        return match &s[0..3] {
+            " + " => (AdvExpr::Add, &s[3..]),
+            " * " => (AdvExpr::Multiply, &s[3..]),
+            unk => panic!("unrecognized expression '{}'", unk),
+        };
+    }
+}
+
+fn eval_adv(s: &str) -> isize {
+    if let Ok(AdvExpr::Value(v)) = eval_adv_expr(s) {
+        return v;
+    }
+    panic!("Unable to evaluate {} to a value", s);
+}
+
+fn eval_adv_expr(s: &str) -> Result<AdvExpr, EvalError> {
+    let mut expr_str = s;
+    let mut stack: Vec<AdvExpr> = Vec::new();
+    loop {
+        let (expr, remainder) = get_next_expr_adv(&expr_str);
+        stack.push(expr);
+        expr_str = remainder;
+        if expr_str.is_empty() {
+            break;
+        }
+    }
+
+    while stack.contains(&AdvExpr::Add) {
+        let ci = stack.iter().position(|e| *e == AdvExpr::Add).unwrap();
+        if let AdvExpr::Value(lh) = stack.remove(ci - 1) {
+            stack.remove(ci - 1);
+            if let AdvExpr::Value(rh) = stack.remove(ci - 1) {
+                stack.insert(ci - 1, AdvExpr::Value(lh + rh));
+            }
+        }
+    }
+
+    while stack.contains(&AdvExpr::Multiply) {
+        let ci = stack.iter().position(|e| *e == AdvExpr::Multiply).unwrap();
+        if let AdvExpr::Value(lh) = stack.remove(ci - 1) {
+            stack.remove(ci - 1);
+            if let AdvExpr::Value(rh) = stack.remove(ci - 1) {
+                stack.insert(ci - 1, AdvExpr::Value(lh * rh));
+            }
+        }
+    }
+
+    assert_eq!(stack.len(), 1, "Did not fully reduce");
+    return stack.pop().ok_or_else(|| EvalError);
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -181,6 +264,34 @@ mod test {
         assert_eq!(
             eval_str("((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2").unwrap(),
             13632
+        );
+    }
+
+    #[test]
+    fn test_eval() {
+        assert_eq!(eval_adv_expr("2 + (3 + 4)").unwrap(), AdvExpr::Value(9));
+    }
+
+    #[test]
+    fn test1_adv() {
+        assert_eq!(eval_adv("1 + (2 * 3) + (4 * (5 + 6))"), 51);
+    }
+
+    #[test]
+    fn test2_adv() {
+        assert_eq!(eval_adv("2 * 3 + (4 * 5)"), 46);
+    }
+
+    #[test]
+    fn test3_adv() {
+        assert_eq!(eval_adv("5 + (8 * 3 + 9 + 3 * 4 * 3)"), 1445);
+        assert_eq!(
+            eval_adv("5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"),
+            669060
+        );
+        assert_eq!(
+            eval_adv("((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"),
+            23340
         );
     }
 }
