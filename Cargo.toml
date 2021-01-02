@@ -13,3 +13,11 @@ lazy_static = "*"
 num-traits = "*"
 multimap = "*"
 num = "*"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "find_closing_paren"
+harness = false
+
