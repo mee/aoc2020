@@ -289,16 +289,16 @@ mod test {
     fn test() {
         let mut space = INPUT1.parse::<Space>().unwrap();
         assert_eq!(space.active_count(), 5);
-        space.step_times(6);
+        space.step_times(6).unwrap();
         assert_eq!(space.active_count(), 112);
         println!("{}", space);
     }
 
     #[test]
-    fn test4D() {
+    fn test4_d() {
         let mut space = INPUT1.parse::<Space4D>().unwrap();
         assert_eq!(space.active_count(), 5);
-        space.step_times(6);
+        space.step_times(6).unwrap();
         assert_eq!(space.active_count(), 848);
         println!("{}", space);
     }
